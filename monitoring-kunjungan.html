@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0B1220" />
+  <title>Monitoring Kunjungan · SFA Tangerang</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
+          colors: {
+            brand: {
+              50: '#EEF4FF', 100: '#DCE7FF', 200: '#BCD2FF', 300: '#8FB3FF',
+              400: '#5C8DFF', 500: '#3767F6', 600: '#234CE0', 700: '#1B3CB8',
+              800: '#1A3591', 900: '#1B3178'
+            },
+            ink: { 700: '#1B2B47', 800: '#111C31', 900: '#0B1220', 950: '#070B14' }
+          }
+        }
+      }
+    };
+  </script>
+</head>
+
+<body class="bg-[#EEF2F8] font-sans text-ink-900 antialiased">
+  <main class="mx-auto w-full max-w-[480px] px-4 sm:px-6"
+        style="padding-top: max(16px, env(safe-area-inset-top)); padding-bottom: max(26px, env(safe-area-inset-bottom));">
+
+    <header class="flex items-center justify-between gap-2">
+      <a href="index.html" aria-label="Kembali ke beranda"
+         class="grid h-10 w-10 shrink-0 place-items-center rounded-[14px] bg-white text-ink-800 shadow-sm ring-1 ring-slate-900/5 transition hover:bg-slate-50 active:scale-95">
+        <i data-lucide="arrow-left" class="h-[18px] w-[18px]"></i>
+      </a>
+      <div class="min-w-0 text-center leading-tight">
+        <p class="text-[9px] font-extrabold uppercase tracking-[0.18em] text-slate-400">SFA · Tangerang</p>
+        <p class="truncate text-[13px] font-extrabold text-ink-900">Monitoring Kunjungan</p>
+      </div>
+      <span class="w-10 shrink-0"></span>
+    </header>
+
+    <section class="mt-5 rounded-[24px] bg-ink-950 p-5 shadow-[0_22px_44px_-24px_rgba(7,11,20,.9)]">
+      <p class="text-[9.5px] font-bold uppercase tracking-[0.16em] text-white/45">Tim Tangerang · ASM Rizky Daniel</p>
+      <h1 class="mt-1 text-[19px] font-extrabold leading-tight text-white">Monitoring Kunjungan</h1>
+      <p class="mt-1 text-[11.5px] leading-relaxed text-white/55">Detail monitoring kunjungan sales.</p>
+    </section>
+
+    <section class="mt-3 rounded-2xl bg-white p-5 text-center shadow-sm ring-1 ring-slate-900/5">
+      <div class="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-600">
+        <i data-lucide="hammer" class="h-5 w-5"></i>
+      </div>
+      <p class="mt-3 text-[13px] font-extrabold text-ink-900">Detail akan ditambahkan</p>
+      <p class="mt-1 text-[11.5px] leading-relaxed text-slate-500">Halaman ini siap dikembangkan. Kirimkan kebutuhan detailnya untuk disambungkan ke data spreadsheet.</p>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>if (window.lucide) window.lucide.createIcons();</script>
+  <script src="nav.js"></script>
+</body>
+</html>
