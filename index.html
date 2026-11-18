@@ -672,10 +672,11 @@
         else { ptr.style.transform = ''; ptr.style.opacity = ''; }
       });
 
-            /* ===================== BULAN ===================== */
-      const BULAN_MULAI = "202601";    // format YYYYMM
-      const BULAN_SELESAI = "202611";  // format YYYYMM
-      const JUMLAH_TAMPIL = 6;         // jumlah bulan yang terlihat di grafik
+                  /* ===================== TOTAL SALES & GRAFIK LANDING ===================== */
+      const BULAN_MULAI = "202601";
+      const BULAN_SELESAI = "202611";
+      const JUMLAH_TAMPIL = 6;
+      const POSISI_TOTAL = 9;   // nomor baris total di spreadsheet (baris 1 = header)
       const NAMA_BULAN = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
       const NAMA_BULAN_PANJANG = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
@@ -693,60 +694,61 @@
       const labelPendek = (kode) => NAMA_BULAN[+kode.slice(4, 6) - 1] + " " + kode.slice(2, 4);
       const labelPanjang = (kode) => NAMA_BULAN_PANJANG[+kode.slice(4, 6) - 1] + " " + kode.slice(0, 4);
 
-      // Mengubah isi kolom Tanggal menjadi kode "YYYYMM"
-      // Mendukung: 202601 | 2026-01-15 | 15/01/2026 | 15-01-2026
-      function kodeBulan(teks) {
-        if (!teks) return "";
-        const s = String(teks).trim();
-        let m;
-        if ((m = s.match(/^(\d{4})(\d{2})$/))) return m[1] + m[2];
-        if ((m = s.match(/^(\d{4})[-\/](\d{1,2})/))) return m[1] + m[2].padStart(2, "0");
-        if ((m = s.match(/^\d{1,2}[-\/](\d{1,2})[-\/](\d{4})/))) return m[2] + m[1].padStart(2, "0");
-        return "";
+      // Kolom bulan (202601 s.d. 202611) yang berisi angka > 0
+      const adaAngkaBulan = (r) =>
+        !!r && DAFTAR_BULAN.some((b) => SheetData.toNumber(ambil(r, b)) > 0);
+
+      // Mencari baris total dengan tiga cara berurutan
+      function cariBarisTotal(objects) {
+        let t = objects.find((r) =>
+          Object.values(r).some((v) => String(v).trim().toLowerCase().startsWith("total")));
+        if (adaAngkaBulan(t)) return t;
+
+        t = objects[POSISI_TOTAL - 2]; // objects dimulai dari baris 2 spreadsheet
+        if (adaAngkaBulan(t)) return t;
+
+        t = objects.find((r) =>
+          !ambil(r, "NO") && !ambil(r, "NAMA PSR") && !ambil(r, "NAMA OUTLET") && adaAngkaBulan(r));
+        return adaAngkaBulan(t) ? t : null;
       }
 
-      // Agregasi per bulan: { "202601": { nilai, kunjungan }, ... }
-      function agregasiBulan(rows) {
-        const map = {};
-        DAFTAR_BULAN.forEach((b) => { map[b] = { nilai: 0, kunjungan: 0 }; });
-        rows.forEach((r) => {
-          const b = kodeBulan(ambil(r, KOLOM.tanggal));
-          if (!map[b]) return;
-          map[b].kunjungan++;
-          map[b].nilai += SheetData.toNumber(ambil(r, KOLOM.nilai));
-        });
-        return map;
+      // Data sheet + baris total dipisahkan. Baris total tidak ikut dihitung sebagai outlet.
+      function ambilData() {
+        const d = window.SheetData
+          ? SheetData.get(SUMBER)
+          : { objects: [], header: [], status: 'kosong', updatedAt: null };
+        const total = cariBarisTotal(d.objects);
+        return { ...d, objects: d.objects.filter((r) => r !== total), total };
       }
 
-      function barisBulan(rows, kode) {
-        return rows.filter((r) => kodeBulan(ambil(r, KOLOM.tanggal)) === kode);
-      }
-
-      function bulanTerakhirBerisi(agg) {
-        for (let i = DAFTAR_BULAN.length - 1; i >= 0; i--) {
-          if (agg[DAFTAR_BULAN[i]].kunjungan > 0) return DAFTAR_BULAN[i];
-        }
-        return DAFTAR_BULAN[DAFTAR_BULAN.length - 1];
+      function totalBulan(total, kode) {
+        return total ? SheetData.toNumber(ambil(total, kode)) : 0;
       }
 
       /* ===================== STATE GRAFIK ===================== */
-      let bulanAktif = null;                                        // bulan yang dipilih
+      let bulanAktif = null;
       let awalJendela = Math.max(0, DAFTAR_BULAN.length - JUMLAH_TAMPIL);
-      let metrik = 'omzet';
       let aktifPts = [];
       let idxAktif = -1;
 
       const maksAwal = () => Math.max(0, DAFTAR_BULAN.length - JUMLAH_TAMPIL);
-      const ambilData = () => window.SheetData
-        ? SheetData.get(SUMBER)
-        : { objects: [], header: [], status: 'kosong', updatedAt: null };
 
+      // Bulan default: bulan terakhir yang total-nya lebih dari 0
       function pastikanBulanAktif(data) {
-        if (!bulanAktif) bulanAktif = bulanTerakhirBerisi(agregasiBulan(data.objects));
+        if (bulanAktif) return bulanAktif;
+        const terakhir = DAFTAR_BULAN[DAFTAR_BULAN.length - 1];
+        if (!data.total) return terakhir;
+        for (let i = DAFTAR_BULAN.length - 1; i >= 0; i--) {
+          if (totalBulan(data.total, DAFTAR_BULAN[i]) > 0) {
+            bulanAktif = DAFTAR_BULAN[i];
+            return bulanAktif;
+          }
+        }
+        bulanAktif = terakhir;
         return bulanAktif;
       }
 
-      // Geser jendela grafik agar bulan yang dipilih ikut terlihat
+      // Geser jendela 6 bulan agar bulan yang dipilih ikut terlihat
       function pastikanTerlihat(kode) {
         const i = DAFTAR_BULAN.indexOf(kode);
         if (i < 0) return;
@@ -755,17 +757,13 @@
         awalJendela = clamp(awalJendela, 0, maksAwal());
       }
 
-      function siapkanSeri(data, agg) {
+      function siapkanSeri(data) {
         const bulanList = DAFTAR_BULAN.slice(awalJendela, awalJendela + JUMLAH_TAMPIL);
-        if (data.objects.length === 0) {
-          const contoh = DEMO_VALUES.slice(-JUMLAH_TAMPIL).map((v) => metrik === 'omzet' ? v * 1000000 : v);
-          return { bulan: bulanList, values: contoh, demo: true };
-        }
-        return {
-          bulan: bulanList,
-          values: bulanList.map((b) => metrik === 'omzet' ? agg[b].nilai : agg[b].kunjungan),
-          demo: false
-        };
+        const demo = !data.total;
+        const values = demo
+          ? DEMO_VALUES.slice(-JUMLAH_TAMPIL).map((v) => v * 1000000)
+          : bulanList.map((b) => totalBulan(data.total, b));
+        return { bulan: bulanList, values, demo };
       }
 
       function jalur(p) {
@@ -780,10 +778,8 @@
         return d;
       }
 
-      function gambarGrafik() {
-        const data = ambilData();
-        const agg = agregasiBulan(data.objects);
-        const s = siapkanSeri(data, agg);
+      function gambarGrafik(data = ambilData()) {
+        const s = siapkanSeri(data);
         const n = s.values.length;
         const min = Math.min(...s.values), max = Math.max(...s.values);
         const datar = max === min;
@@ -792,15 +788,15 @@
           x: n === 1 ? W / 2 : i * W / (n - 1),
           y: datar ? H / 2 : H - PAD - ((v - min) / (max - min)) * (H - 2 * PAD),
           v,
-          l: labelPanjang(s.bulan[i]),
-          kode: s.demo ? null : s.bulan[i]
+          kode: s.demo ? null : s.bulan[i],
+          l: labelPanjang(s.bulan[i])
         }));
 
-        const garis = $('chartLine');
-        garis.setAttribute('d', jalur(aktifPts));
+        $('chartLine').setAttribute('d', jalur(aktifPts));
         $('chartArea').setAttribute('d',
           `${jalur(aktifPts)} L${aktifPts[n - 1].x.toFixed(1)},${H} L${aktifPts[0].x.toFixed(1)},${H} Z`);
 
+        const garis = $('chartLine');
         garis.style.transition = 'none';
         garis.style.strokeDashoffset = '1';
         requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -808,7 +804,7 @@
           garis.style.strokeDashoffset = '0';
         }));
 
-        setText('chartBadge', s.demo ? 'Contoh' : 'Data spreadsheet');
+        setText('chartBadge', s.demo ? 'Contoh' : 'Total sales');
         renderStripBulan();
         renderLabelBulan(s.bulan);
 
@@ -822,8 +818,8 @@
       }
 
       function tandaiTerpilih() {
-        const i = aktifPts.findIndex((p) => p.kode && p.kode === bulanAktif);
         const dot = $('chartDot');
+        const i = aktifPts.findIndex((p) => p.kode && p.kode === bulanAktif);
         if (i < 0) { dot.classList.add('hidden'); return; }
         const p = aktifPts[i];
         dot.style.left = (p.x / W) * 100 + '%';
@@ -852,7 +848,7 @@
         tip.style.left = clamp(left, 16, 84) + '%';
         tip.style.top = top + '%';
         tip.style.transform = 'translate(-50%, calc(-100% - 10px))';
-        $('tipVal').textContent = metrik === 'omzet' ? rupiahAuto(p.v) : angkaId(p.v) + " kunjungan";
+        $('tipVal').textContent = rupiahAuto(p.v);
         $('tipLabel').textContent = p.l;
         tip.classList.remove('hidden');
         idxAktif = i;
@@ -862,10 +858,10 @@
         const r = $('chartSvg').getBoundingClientRect();
         const px = clamp((e.clientX - r.left) / r.width, 0, 1);
         const n = aktifPts.length;
-        return n === 1 ? 0 : Math.round(px * (n - 1));
+        return n <= 1 ? 0 : Math.round(px * (n - 1));
       }
 
-      // Deret chip bulan (semua bulan, bisa digeser ke samping)
+      // Deret chip semua bulan (bisa digeser ke samping)
       function renderStripBulan() {
         const wadah = $('bulanStrip');
         wadah.innerHTML = "";
@@ -884,6 +880,7 @@
 
       function renderLabelBulan(daftar) {
         const wadah = $('chartLabels');
+        if (!wadah) return;
         wadah.innerHTML = "";
         daftar.forEach((kode) => {
           const aktif = kode === bulanAktif;
@@ -901,8 +898,9 @@
         if (kode !== bulanAktif) haptik(6);
         bulanAktif = kode;
         pastikanTerlihat(kode);
-        renderRingkasLanding(ambilData());
-        gambarGrafik();
+        const data = ambilData();
+        renderRingkasLanding(data);
+        gambarGrafik(data);
       }
 
       $('btnBulanPrev').addEventListener('click', () => geserJendela(-1));
@@ -921,18 +919,6 @@
       hit.addEventListener('click', (e) => {
         const p = aktifPts[indeksDariEvent(e)];
         if (p && p.kode) pilihBulan(p.kode);
-      });
-
-      function setChip(selector, aktifBtn) {
-        qsa(selector).forEach((b) => b.dataset.active = b === aktifBtn ? 'true' : 'false');
-      }
-      qsa('[data-metric]').forEach((b) => {
-        b.addEventListener('click', () => {
-          metrik = b.dataset.metric;
-          setChip('[data-metric]', b);
-          gambarGrafik();
-          haptik(6);
-        });
       });
 
       /* ===================== PERINGKAT SALES ===================== */
@@ -1047,78 +1033,26 @@
         });
       }
 
-            /* ===================== RENDER UTAMA ===================== */
-      function hitungRingkas(rows, data) {
-        const toko = new Set(), sales = new Set();
-        let order = 0, totalNilai = 0, totalTarget = 0, totalRealisasi = 0;
-        rows.forEach((r) => {
-          const t = ambil(r, KOLOM.toko); if (t) toko.add(t);
-          const s = ambil(r, KOLOM.sales); if (s) sales.add(s);
-          const n = SheetData.toNumber(ambil(r, KOLOM.nilai));
-          if (n > 0) { order++; totalNilai += n; }
-          totalTarget += SheetData.toNumber(ambil(r, KOLOM.target));
-          totalRealisasi += SheetData.toNumber(ambil(r, KOLOM.realisasi));
-        });
-        const punyaKolom = adaKolom(data, KOLOM.target) && adaKolom(data, KOLOM.realisasi);
-        const pct = rows.length && punyaKolom && totalTarget > 0
-          ? (totalRealisasi / totalTarget) * 100
-          : null;
-        return { kunjungan: rows.length, toko: toko.size, sales: sales.size, order, totalNilai, pct, punyaKolom };
-      }
-
-      // Landing: angka mengikuti bulan yang dipilih
+                  /* ===================== RENDER UTAMA ===================== */
+      // Kartu utama landing: total sales bulan yang dipilih
       function renderRingkasLanding(data) {
-        const kosong = data.objects.length === 0;
         const bulan = pastikanBulanAktif(data);
-        const rows = barisBulan(data.objects, bulan);
-        const r = hitungRingkas(rows, data);
-
-        setText('pctLabel', 'Pencapaian Tim · ' + labelPanjang(bulan));
-        setVal($('pctNum'), r.pct, f1);
-        $('pctSign').textContent = r.pct === null ? "" : "%";
-
-        let badge;
-        if (!r.punyaKolom) badge = "Isi kolom Target dan Realisasi";
-        else if (!rows.length) badge = "Belum ada data di bulan ini";
-        else if (r.pct === null) badge = "Target belum diisi di bulan ini";
-        else badge = r.pct >= 100 ? "Target tercapai 🎉" : "Menuju target";
-        setText('pctBadge', badge);
-
-        $('ringBar').style.strokeDashoffset = C * (1 - Math.min(r.pct ?? 0, 100) / 100);
-        $('ringText').textContent = r.pct === null ? "—" : Math.round(r.pct) + "%";
-
-        setVal($('landingKunjungan'), kosong ? null : r.kunjungan);
-        setVal($('landingToko'), kosong ? null : r.toko);
-        setVal($('landingSales'), kosong ? null : r.sales);
+        setText('pctLabel', 'Total Sales · ' + labelPanjang(bulan));
+        $('pctNum').textContent = data.total ? rupiahAuto(totalBulan(data.total, bulan)) : "-";
+        $('pctSign').textContent = "";
+        setText('pctBadge', data.total ? "Total seluruh outlet" : "Baris total belum terbaca");
+        $('ringBar').style.strokeDashoffset = C;
+        $('ringText').textContent = "—";
       }
 
       function render() {
-        const data = SheetData.get(SUMBER);
+        const data = ambilData();
         lastData = data;
         if (data.updatedAt) lastUpdate = data.updatedAt;
         tampilStatus(data);
         tampilWaktu();
-
         renderRingkasLanding(data);
-
-        // Dashboard memakai seluruh data (tidak difilter per bulan)
-        const kosong = data.objects.length === 0;
-        const semua = hitungRingkas(data.objects, data);
-        setVal($('dashKunjungan'), kosong ? null : semua.kunjungan);
-        setText('dashKunjunganSub', "Total seluruh data");
-        setVal($('dashOrder'), kosong ? null : semua.order);
-        setText('dashOrderSub', rupiahAuto(semua.totalNilai));
-        setVal($('dashToko'), kosong ? null : semua.toko);
-        setText('dashTokoSub', "Toko unik");
-        const pctText = semua.pct === null ? "-" : semua.pct.toFixed(1).replace(".", ",");
-        setText('dashTarget', pctText === "-" ? "-" : pctText + "%");
-        $('dashTargetBar').style.width = (semua.pct === null ? 0 : Math.min(semua.pct, 100)) + "%";
-
-        renderFilterSales(data);
-        renderAktivitas(data);
-        renderPeringkat(data);
-        gambarGrafik();
-
+        gambarGrafik(data);
         setText('dashFooterInfo', "Data spreadsheet · " + jam(data.updatedAt || new Date()));
       }
 
