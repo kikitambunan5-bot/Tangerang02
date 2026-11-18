@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Data Saya</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
+    input { width: 100%; padding: .6rem; margin-bottom: 1rem; font-size: 1rem; box-sizing: border-box; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: .5rem .75rem; border-bottom: 1px solid #ddd; text-align: left; }
+    th { background: #f3f4f6; }
+    #status { color: #666; font-size: .85rem; }
+  </style>
+</head>
+<body>
+  <h1>Data Saya</h1>
+  <input id="cari" placeholder="Cari...">
+  <table id="tabel"></table>
+  <p id="status">Memuat data...</p>
+
+<script>
+  const CSV_URL = https://docs.google.com/spreadsheets/d/e/2PACX-1vQDjOZV7Bgcr6RzOr7GaRCY8qYU41MhD6HzoXwSrKqgRocTrke9twbcKS8LF3w5H1KwZKqxbmo-DnS9/pub?gid=686242649&single=true&output=csv;
+  let semuaBaris = [];
+
+  // Mengubah teks CSV menjadi array baris (aman untuk koma dan tanda kutip di dalam sel)
+  function parseCSV(teks) {
+    const hasil = [];
+    let baris = [], sel = "", dalamKutip = false;
+    for (let i = 0; i < teks.length; i++) {
+      const ch = teks[i];
+      if (dalamKutip) {
+        if (ch === '"') {
+          if (teks[i + 1] === '"') { sel += '"'; i++; }
+          else dalamKutip = false;
+        } else sel += ch;
+      } else if (ch === '"') {
+        dalamKutip = true;
+      } else if (ch === ",") {
+        baris.push(sel); sel = "";
+      } else if (ch === "\n") {
+        baris.push(sel); hasil.push(baris); baris = []; sel = "";
+      } else if (ch !== "\r") {
+        sel += ch;
+      }
+    }
+    if (sel !== "" || baris.length) { baris.push(sel); hasil.push(baris); }
+    return hasil;
+  }
+
+  function tampilkan() {
+    const kata = document.getElementById("cari").value.toLowerCase();
+    const [header, ...isi] = semuaBaris;
+    const tabel = document.getElementById("tabel");
+    tabel.innerHTML = "";
+    if (!header) return;
+
+    const buatBaris = (nilai, tag) => {
+      const tr = document.createElement("tr");
+      nilai.forEach(v => {
+        const el = document.createElement(tag);
+        el.textContent = v;
+        tr.appendChild(el);
+      });
+      tabel.appendChild(tr);
+    };
+
+    buatBaris(header, "th");
+    isi.filter(b => b.join(" ").toLowerCase().includes(kata))
+       .forEach(b => buatBaris(b, "td"));
+  }
+
+  async function muatData() {
+    const status = document.getElementById("status");
+    try {
+      const res = await fetch(CSV_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error(res.status);
+      semuaBaris = parseCSV(await res.text());
+      tampilkan();
+      status.textContent = "Terakhir dimuat: " + new Date().toLocaleTimeString("id-ID");
+    } catch (e) {
+      status.textContent = "Gagal memuat data. Periksa link CSV Anda.";
+    }
+  }
+
+  document.getElementById("cari").addEventListener("input", tampilkan);
+  muatData();
+  setInterval(muatData, 60000); // muat ulang tiap 60 detik
+</script>
+</body>
+</html>
