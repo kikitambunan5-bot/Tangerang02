@@ -206,8 +206,58 @@
           </div>
         </div>
 
-        <!-- Kontrol grafik -->
+                <!-- Badge sumber data -->
+        <div class="relative flex items-center justify-end">
+          <span id="chartBadge" class="rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-semibold text-white/60">Memuat</span>
+        </div>
 
+        <!-- Pilih bulan -->
+        <div class="relative mt-3 flex items-center gap-1.5">
+          <button id="btnBulanPrev" type="button" aria-label="Geser ke bulan sebelumnya"
+                  class="ripple grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/[0.06] text-white/70 ring-1 ring-inset ring-white/10 transition hover:bg-white/10 active:scale-95">
+            <i data-lucide="chevron-left" class="h-3.5 w-3.5"></i>
+          </button>
+          <div id="bulanStrip" class="relative flex min-w-0 flex-1 gap-1 overflow-x-auto py-0.5" style="scrollbar-width: none;"></div>
+          <button id="btnBulanNext" type="button" aria-label="Geser ke bulan berikutnya"
+                  class="ripple grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/[0.06] text-white/70 ring-1 ring-inset ring-white/10 transition hover:bg-white/10 active:scale-95">
+            <i data-lucide="chevron-right" class="h-3.5 w-3.5"></i>
+          </button>
+        </div>
+
+        <!-- Grafik -->
+        <div id="chartWrap" class="relative mt-3 h-[96px] touch-pan-y select-none">
+          <svg id="chartSvg" viewBox="0 0 320 96" preserveAspectRatio="none" class="h-full w-full overflow-visible" aria-hidden="true">
+            <defs>
+              <linearGradient id="gArea" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#5C8DFF" stop-opacity="0.45" />
+                <stop offset="100%" stop-color="#5C8DFF" stop-opacity="0" />
+              </linearGradient>
+              <linearGradient id="gLine" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#8FB3FF" />
+                <stop offset="100%" stop-color="#34D399" />
+              </linearGradient>
+            </defs>
+            <g stroke="rgba(255,255,255,0.07)" stroke-width="1">
+              <line x1="0" y1="24" x2="320" y2="24" />
+              <line x1="0" y1="48" x2="320" y2="48" />
+              <line x1="0" y1="72" x2="320" y2="72" />
+            </g>
+            <path id="chartArea" fill="url(#gArea)" d="" />
+            <path id="chartLine" fill="none" stroke="url(#gLine)" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round" pathLength="1"
+                  stroke-dasharray="1" style="stroke-dashoffset: 1" class="line-draw" d="" />
+            <rect id="chartHit" x="0" y="0" width="320" height="96" fill="transparent" />
+          </svg>
+
+          <div id="chartDot" class="pointer-events-none absolute hidden h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white ring-4 ring-brand-400/40"></div>
+          <div id="chartTip" class="pointer-events-none absolute hidden whitespace-nowrap rounded-lg bg-white px-2.5 py-1.5 text-center shadow-xl">
+            <p id="tipVal" class="text-[11px] font-extrabold text-ink-900"></p>
+            <p id="tipLabel" class="text-[9px] font-semibold text-slate-500"></p>
+          </div>
+        </div>
+
+        <!-- Label bulan di bawah grafik (diisi script) -->
+        <div id="chartLabels" class="relative mt-1.5 flex items-center justify-between gap-1 text-[9px] font-semibold text-white/40"></div>
         <!-- Ringkasan cepat (ketuk untuk ke dashboard) -->
         <div class="relative mt-4 grid grid-cols-3 divide-x divide-white/10 rounded-2xl bg-white/[0.04] py-2 ring-1 ring-inset ring-white/10">
           <button type="button" data-goto class="ripple rounded-xl px-3 py-1 text-left transition hover:bg-white/[0.06]">
