@@ -11,11 +11,9 @@
     // Satu atau lebih sumber data. Nama di sebelah kiri bebas,
     // dipakai saat memanggil SheetData.get("nama").
     // Setiap tab/sheet perlu link CSV sendiri.
-    sources: {
-      utama: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQDjOZV7Bgcr6RzOr7GaRCY8qYU41MhD6HzoXwSrKqgRocTrke9twbcKS8LF3w5H1KwZKqxbmo-DnS9/pub?gid=686242649&single=true&output=csv"
-      // contoh sumber kedua:
-      // target: "https://docs.google.com/spreadsheets/d/e/.../pub?gid=123&single=true&output=csv"
-    },
+      sources: {
+    utama: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQDjOZV7Bgcr6RzOr7GaRCY8qYU41MhD6HzoXwSrKqgRocTrke9twbcKS8LF3w5H1KwZKqxbmo-DnS9/pub?gid=686242649&single=true&output=csv",
+  },
     refreshMs: 60000,   // pembaruan otomatis dalam milidetik (60000 = 1 menit). 0 = nonaktif
     pakaiCache: true    // simpan data terakhir di browser agar tampil cepat dan tetap ada jika gagal
   };
