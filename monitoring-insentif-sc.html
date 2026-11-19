@@ -1,68 +1,146 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0B1220" />
-  <title>Monitoring Insentif SC · SFA Tangerang</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitoring Insentif SC</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
-          colors: {
-            brand: {
-              50: '#EEF4FF', 100: '#DCE7FF', 200: '#BCD2FF', 300: '#8FB3FF',
-              400: '#5C8DFF', 500: '#3767F6', 600: '#234CE0', 700: '#1B3CB8',
-              800: '#1A3591', 900: '#1B3178'
-            },
-            ink: { 700: '#1B2B47', 800: '#111C31', 900: '#0B1220', 950: '#070B14' }
-          }
-        }
-      }
-    };
-  </script>
-</head>
-
-<body class="bg-[#EEF2F8] font-sans text-ink-900 antialiased">
-  <main class="mx-auto w-full max-w-[480px] px-4 sm:px-6"
-        style="padding-top: max(16px, env(safe-area-inset-top)); padding-bottom: max(26px, env(safe-area-inset-bottom));">
-
-    <header class="flex items-center justify-between gap-2">
-      <a href="index.html" aria-label="Kembali ke beranda"
-         class="grid h-10 w-10 shrink-0 place-items-center rounded-[14px] bg-white text-ink-800 shadow-sm ring-1 ring-slate-900/5 transition hover:bg-slate-50 active:scale-95">
-        <i data-lucide="arrow-left" class="h-[18px] w-[18px]"></i>
-      </a>
-      <div class="min-w-0 text-center leading-tight">
-        <p class="text-[9px] font-extrabold uppercase tracking-[0.18em] text-slate-400">Monitoring Insentif SC</p>
-        <p class="truncate text-[13px] font-extrabold text-ink-900">Monitoring Insentif SC</p>
-      </div>
-      <span class="w-10 shrink-0"></span>
-    </header>
-
-    <section class="mt-5 rounded-[24px] bg-ink-950 p-5 shadow-[0_22px_44px_-24px_rgba(7,11,20,.9)]">
-      <p class="text-[9.5px] font-bold uppercase tracking-[0.16em] text-white/45">Tim Tangerang · ASM Rizky Daniel</p>
-      <h1 class="mt-1 text-[19px] font-extrabold leading-tight text-white">Monitoring Insentif SC</h1>
-      <p class="mt-1 text-[11.5px] leading-relaxed text-white/55">Monitoring Insentif SC.</p>
-    </section>
-
-    <section class="mt-3 rounded-2xl bg-white p-5 text-center shadow-sm ring-1 ring-slate-900/5">
-      <div class="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-600">
-        <i data-lucide="hammer" class="h-5 w-5"></i>
-      </div>
-      <p class="mt-3 text-[13px] font-extrabold text-ink-900">Detail akan ditambahkan</p>
-      <p class="mt-1 text-[11.5px] leading-relaxed text-slate-500">Halaman ini siap dikembangkan. Kirimkan kebutuhan detailnya untuk disambungkan ke data spreadsheet.</p>
-    </section>
-  </main>
-
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-  <script>if (window.lucide) window.lucide.createIcons();</script>
+  <script src="sheet.js"></script>
   <script src="nav.js"></script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-[#eef2f8] text-slate-900">
+
+  <div class="mx-auto w-full max-w-xl px-5 pt-6 pb-10">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <a href="index.html" class="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow" aria-label="Kembali">
+        <i data-lucide="arrow-left" class="h-5 w-5"></i>
+      </a>
+      <div class="text-center">
+        <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Monitoring Insentif SC</p>
+        <p class="text-base font-bold">Monitoring Insentif SC</p>
+      </div>
+      <button id="navToggle" class="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow" aria-label="Menu">
+        <i data-lucide="menu" class="h-5 w-5"></i>
+      </button>
+    </div>
+
+    <!-- Kartu judul -->
+    <div class="mt-6 rounded-[28px] bg-[#0b0d12] p-6 text-white shadow-xl">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Tim Tangerang · ASM Rizky Daniel</p>
+      <h1 class="mt-2 text-2xl font-extrabold">Monitoring Insentif SC</h1>
+      <p class="mt-1 text-sm text-slate-400">Daftar PSR</p>
+    </div>
+
+    <!-- Daftar PSR -->
+    <div class="mt-4 rounded-[28px] bg-white p-5 shadow">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <p class="text-sm font-bold">Daftar PSR</p>
+          <p id="jumlahPsr" class="text-xs text-slate-500">0 PSR</p>
+        </div>
+        <span id="statusBadge" class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">Memuat</span>
+      </div>
+
+      <input id="cariPsr" type="search" placeholder="Cari nama PSR..."
+             class="mt-4 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400">
+
+      <ul id="listPsr" class="mt-4 space-y-1"></ul>
+      <p id="listKosong" class="hidden py-8 text-center text-sm text-slate-500">Tidak ada PSR.</p>
+    </div>
+
+  </div>
+
+  <!-- Menu samping -->
+  <div id="navOverlay" class="fixed inset-0 z-40 hidden bg-black/40"></div>
+  <aside id="navDrawer" class="fixed right-0 top-0 z-50 h-full w-72 translate-x-full bg-white p-5 shadow-2xl transition-transform duration-300">
+    <div class="mb-6 flex items-center justify-between">
+      <p class="font-bold">Menu</p>
+      <button id="navClose" class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100" aria-label="Tutup">
+        <i data-lucide="x" class="h-4 w-4"></i>
+      </button>
+    </div>
+    <nav class="space-y-2">
+      <a href="monitoring-kunjungan.html" class="block rounded-xl px-4 py-3 text-sm font-semibold hover:bg-slate-100">Monitoring Kunjungan</a>
+      <a href="data-tim-sales.html" class="block rounded-xl px-4 py-3 text-sm font-semibold hover:bg-slate-100">Data Tim Sales</a>
+      <a href="monitoring-insentif-sc.html" class="block rounded-xl px-4 py-3 text-sm font-semibold hover:bg-slate-100">Monitoring Insentif SC</a>
+    </nav>
+  </aside>
+
+  <script>
+    const el = id => document.getElementById(id);
+    let semuaNama = [];
+
+    function escHtml(s) {
+      return String(s ?? "").replace(/[&<>"']/g, c => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[c]));
+    }
+
+    function normal(s) {
+      return String(s ?? "").normalize("NFKC").replace(/\s+/g, " ").trim().toLocaleUpperCase("id-ID");
+    }
+
+    // Mengambil nama PSR unik dari kolom NAMA PSR di tab resumeGt
+    function ambilNamaPsr(d) {
+      const header = d.header || [];
+      let kolom = header.find(h => normal(h) === "NAMA PSR");
+      if (!kolom) kolom = header.find(h => normal(h).includes("PSR"));
+      if (!kolom) return [];
+
+      const hasil = [];
+      const sudah = new Set();
+      for (const baris of d.objects || []) {
+        const nama = String(baris[kolom] ?? "").trim();
+        if (!nama) continue;
+        const n = normal(nama);
+        if (n.startsWith("TOTAL") || n.startsWith("JUMLAH")) continue;
+        if (sudah.has(n)) continue;
+        sudah.add(n);
+        hasil.push(nama);
+      }
+      return hasil;
+    }
+
+    const LABEL_STATUS = {
+      memuat: "Memuat",
+      ok: "Terhubung",
+      cache: "Terhubung",
+      kosong: "Belum terhubung",
+      error: "Gagal"
+    };
+
+    function render() {
+      const d = SheetData.get("resumeGt");
+      el("statusBadge").textContent = LABEL_STATUS[d.status] || d.status;
+      semuaNama = (d.status === "ok" || d.status === "cache") ? ambilNamaPsr(d) : [];
+      tampilDaftar();
+    }
+
+    function tampilDaftar() {
+      const q = normal(el("cariPsr").value);
+      const hasil = semuaNama.filter(n => normal(n).includes(q));
+
+      el("jumlahPsr").textContent = hasil.length + " PSR";
+      el("listPsr").innerHTML = hasil.map((n, i) => `
+        <li class="flex items-center gap-3 rounded-2xl px-3 py-3">
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">${i + 1}</span>
+          <span class="text-sm font-semibold">${escHtml(n)}</span>
+        </li>`).join("");
+      el("listKosong").classList.toggle("hidden", hasil.length > 0);
+    }
+
+    el("cariPsr").addEventListener("input", tampilDaftar);
+    SheetData.onUpdate(render);
+    render();
+    lucide.createIcons();
+  </script>
 </body>
 </html>
