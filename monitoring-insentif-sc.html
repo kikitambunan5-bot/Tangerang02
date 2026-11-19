@@ -2,158 +2,187 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Monitoring Insentif SC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Data Tim Sales · Tangerang</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-  <script src="sheet.js"></script>
-  <script src="nav.js"></script>
-  <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; }
-  </style>
+  <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
-<body class="min-h-screen bg-[#eef2f8] text-slate-900">
+<body class="min-h-screen bg-gradient-to-b from-indigo-50 via-slate-50 to-emerald-50 pb-10 text-slate-800">
 
-  <!-- Header, sama seperti Data Tim Sales -->
-  <div class="mx-auto w-full max-w-xl px-5 pt-6 pb-4">
-    <div class="flex items-center justify-between">
-      <a href="index.html" class="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow" aria-label="Kembali">
-        <i data-lucide="arrow-left" class="h-5 w-5"></i>
-      </a>
-      <div class="text-center">
-        <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Monitoring Insentif SC</p>
-        <p class="text-base font-bold">Monitoring Insentif SC</p>
-      </div>
-      <button id="navToggle" class="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow" aria-label="Menu">
-        <i data-lucide="menu" class="h-5 w-5"></i>
-      </button>
-    </div>
-  </div>
+  <header class="mx-auto w-full max-w-xl px-5 pt-6 pb-4">
+    <a href="index.html" class="inline-flex items-center gap-1 text-sm font-semibold text-indigo-600">
+      <span class="text-lg leading-none">‹</span> Kembali
+    </a>
+    <h1 class="mt-3 text-2xl font-extrabold text-slate-900">Data Tim Sales</h1>
+    <p class="mt-1 text-sm text-slate-500">Tim Tangerang · Rizky Daniel</p>
+  </header>
 
-  <div class="mx-auto w-full max-w-xl px-4 pb-10">
-
-    <!-- Kartu judul -->
-    <div class="rounded-[28px] bg-[#0b0d12] p-6 text-white shadow-xl">
-      <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Tim Tangerang · ASM Rizky Daniel</p>
-      <h1 class="mt-2 text-2xl font-extrabold">Monitoring Insentif SC</h1>
-      <p class="mt-1 text-sm text-slate-400">Daftar PSR</p>
-    </div>
-
-    <!-- Daftar PSR -->
-    <div class="mt-4 rounded-[28px] bg-white p-5 shadow">
+  <main class="mx-auto w-full max-w-xl px-4">
+    <section class="rounded-3xl bg-white p-5 shadow-sm">
       <div class="flex items-center justify-between gap-3">
         <div>
-          <p class="text-sm font-bold">Daftar PSR</p>
-          <p id="jumlahPsr" class="text-xs text-slate-500">0 PSR</p>
+          <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Daftar PSR</p>
+          <p id="jumlahPsr" class="mt-1 text-2xl font-extrabold text-slate-900">-</p>
         </div>
-        <span id="statusBadge" class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">Memuat</span>
+        <span id="statusBadge" class="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-600">Memuat</span>
       </div>
 
       <input id="cariPsr" type="search" placeholder="Cari nama PSR..."
-             class="mt-4 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400">
+             class="mt-4 w-full rounded-2xl bg-slate-100 px-4 py-2.5 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-indigo-200">
 
-      <p id="pesan" class="mt-4 hidden rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800"></p>
+      <p id="listKosong" class="mt-4 hidden text-sm text-slate-500"></p>
+      <ol id="listPsr" class="mt-2 divide-y divide-slate-100"></ol>
+    </section>
 
-      <ul id="listPsr" class="mt-4 space-y-1"></ul>
-      <p id="listKosong" class="hidden py-8 text-center text-sm text-slate-500">Tidak ada PSR.</p>
-    </div>
+    <p id="sumberInfo" class="mt-3 text-center text-[11px] text-slate-500"></p>
+  </main>
 
-  </div>
-
+  <script src="sheet.js"></script>
+  <script src="nav.js"></script>
   <script>
-    const el = id => document.getElementById(id);
-    let semuaNama = [];
+  (function () {
+    const SUMBER_PSR = "resumeGt";
+    const BADGE = {
+      memuat: ["Memuat", "bg-slate-100 text-slate-600"],
+      ok: ["Terbaru", "bg-emerald-50 text-emerald-600"],
+      cache: ["Dari cache", "bg-amber-50 text-amber-700"],
+      error: ["Gagal", "bg-rose-50 text-rose-600"],
+      kosong: ["Belum disambung", "bg-slate-100 text-slate-600"]
+    };
+    const PESAN_STATUS = {
+      memuat: "Memuat daftar PSR...",
+      error: "Gagal mengambil data. Periksa link CSV di sheet.js.",
+      kosong: "Sumber belum disambungkan di sheet.js."
+    };
 
-    function siap() {
-      return typeof SheetData !== "undefined" && typeof SheetData.get === "function";
+    let semuaPsr = [];
+
+    const $ = id => document.getElementById(id);
+
+    // cari kolom nama PSR di header (toleran terhadap huruf besar/kecil)
+    function cariKolomPsr(header) {
+      const persis = header.find(h => String(h).trim().toUpperCase() === "NAMA PSR");
+      if (persis) return persis;
+      return header.find(h => /psr/i.test(String(h))) || null;
     }
 
-    function escHtml(s) {
-      return String(s ?? "").replace(/[&<>"']/g, c => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-      }[c]));
-    }
-
-    function normal(s) {
-      return String(s ?? "").normalize("NFKC").replace(/\s+/g, " ").trim().toLocaleUpperCase("id-ID");
-    }
-
+    // mengembalikan null jika kolom PSR tidak ditemukan
     function ambilNamaPsr(d) {
-      const header = d.header || [];
-      let kolom = header.find(h => normal(h) === "NAMA PSR");
-      if (!kolom) kolom = header.find(h => normal(h).includes("PSR"));
-      if (!kolom) return [];
-
+      const kolom = cariKolomPsr(d.header || []);
+      if (!kolom) return null;
       const hasil = [];
-      const sudah = new Set();
-      for (const baris of d.objects || []) {
-        const nama = String(baris[kolom] ?? "").trim();
-        if (!nama) continue;
-        const n = normal(nama);
-        if (n.startsWith("TOTAL") || n.startsWith("JUMLAH")) continue;
-        if (sudah.has(n)) continue;
-        sudah.add(n);
-        hasil.push(nama);
-      }
+      (d.objects || []).forEach(r => {
+        const nama = String(r[kolom] == null ? "" : r[kolom]).trim();
+        if (!nama || /^(total|jumlah)/i.test(nama)) return;
+        if (!hasil.includes(nama)) hasil.push(nama);
+      });
       return hasil;
     }
 
-    const LABEL_STATUS = {
-      memuat: "Memuat",
-      ok: "Terhubung",
-      cache: "Terhubung",
-      kosong: "Belum terhubung",
-      error: "Gagal"
-    };
+    function tampilBadge(status) {
+      const b = BADGE[status] || BADGE.memuat;
+      const el = $("statusBadge");
+      el.textContent = b[0];
+      el.className = "rounded-full px-3 py-1 text-[11px] font-semibold " + b[1];
+    }
+
+    function tampilPesan(teks) {
+      const p = $("listKosong");
+      p.textContent = teks;
+      p.classList.remove("hidden");
+    }
+
+    function sembunyikanPesan() {
+      $("listKosong").classList.add("hidden");
+    }
 
     function tampilDaftar() {
-      const q = normal(el("cariPsr").value);
-      const hasil = semuaNama.filter(n => normal(n).includes(q));
+  const kata = ($("cariPsr").value || "").trim().toLowerCase();
+  const ol = $("listPsr");
+  ol.innerHTML = "";
 
-      el("jumlahPsr").textContent = hasil.length + " PSR";
-      el("listPsr").innerHTML = hasil.map((n, i) => `
-        <li class="flex items-center gap-3 rounded-2xl px-3 py-3">
-          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">${i + 1}</span>
-          <span class="text-sm font-semibold">${escHtml(n)}</span>
-        </li>`).join("");
-      el("listKosong").classList.toggle("hidden", hasil.length > 0);
-    }
+  const tampil = semuaPsr.filter(nama =>
+    nama.toLowerCase().includes(kata)
+  );
+
+  tampil.forEach(nama => {
+    const li = document.createElement("li");
+
+    const tautan = document.createElement("a");
+    tautan.href = "detail-psr.html?psr=" + encodeURIComponent(nama);
+    tautan.className =
+      "flex items-center gap-3 rounded-xl px-2 py-3 transition " +
+      "hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-300";
+    tautan.setAttribute("aria-label", "Buka detail " + nama);
+
+    const nomor = document.createElement("span");
+    nomor.className =
+      "flex h-7 w-7 shrink-0 items-center justify-center " +
+      "rounded-full bg-indigo-50 text-xs font-bold text-indigo-600";
+    nomor.textContent = semuaPsr.indexOf(nama) + 1;
+
+    const teks = document.createElement("span");
+    teks.className = "min-w-0 flex-1 break-words text-sm font-semibold text-slate-800";
+    teks.textContent = nama;
+
+    const panah = document.createElement("span");
+    panah.className = "shrink-0 text-xl text-indigo-500";
+    panah.textContent = "›";
+
+    tautan.append(nomor, teks, panah);
+    li.appendChild(tautan);
+    ol.appendChild(li);
+  });
+
+  if (tampil.length === 0) {
+    tampilPesan(
+      semuaPsr.length
+        ? "Tidak ada PSR yang cocok."
+        : "Belum ada data PSR."
+    );
+  } else {
+    sembunyikanPesan();
+  }
+}
 
     function render() {
-      const pesan = el("pesan");
-      pesan.classList.add("hidden");
-      semuaNama = [];
+      const d = window.SheetData
+        ? SheetData.get(SUMBER_PSR)
+        : { status: "error", header: [], objects: [] };
 
-      if (!siap()) {
-        el("statusBadge").textContent = "Gagal";
-        pesan.textContent = "sheet.js belum termuat dengan benar. Periksa error sintaks di baris 26 sheet.js (koma di akhir baris sebelumnya).";
-        pesan.classList.remove("hidden");
+      tampilBadge(d.status);
+
+      const nama = ambilNamaPsr(d);
+      if (nama === null) {
+        semuaPsr = [];
+        const ol = $("listPsr");
+        if (ol) ol.innerHTML = "";
+        $("jumlahPsr").textContent = "-";
+        if (d.status === "ok") {
+          tampilPesan("Kolom PSR tidak ditemukan di sheet. Lihat Console (F12).");
+          console.log("header resume by gt:", d.header);
+        } else {
+          tampilPesan(PESAN_STATUS[d.status] || "Memuat daftar PSR...");
+        }
+      } else {
+        semuaPsr = nama;
+        $("jumlahPsr").textContent = semuaPsr.length + " PSR";
         tampilDaftar();
-        return;
       }
 
-      const d = SheetData.get("resumeGt");
-      el("statusBadge").textContent = LABEL_STATUS[d.status] || d.status;
-
-      if (d.status === "ok" || d.status === "cache") {
-        semuaNama = ambilNamaPsr(d);
-      } else if (d.status === "error") {
-        pesan.textContent = "Data gagal dimuat. Pastikan tab resumeGt sudah dipublish sebagai CSV.";
-        pesan.classList.remove("hidden");
-      } else if (d.status === "kosong") {
-        pesan.textContent = "Link resumeGt belum diisi di sheet.js.";
-        pesan.classList.remove("hidden");
-      }
-
-      tampilDaftar();
+      $("sumberInfo").textContent = d.updatedAt
+        ? "Diperbarui " + new Date(d.updatedAt).toLocaleString("id-ID")
+        : "Sumber: sheet resume by gt";
     }
 
-    el("cariPsr").addEventListener("input", tampilDaftar);
-    if (siap() && typeof SheetData.onUpdate === "function") SheetData.onUpdate(render);
+    $("cariPsr").addEventListener("input", tampilDaftar);
+    if (window.lucide) window.lucide.createIcons();
     render();
-    lucide.createIcons();
+    if (window.SheetData) SheetData.onUpdate(render);
+  })();
   </script>
 </body>
 </html>
