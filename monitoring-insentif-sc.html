@@ -2,187 +2,366 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Monitoring Insentif SC · Tangerang</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitoring Insentif SC</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-  <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+  <script src="sheet.js"></script>
+  <script src="nav.js"></script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+  </style>
 </head>
-<body class="min-h-screen bg-gradient-to-b from-indigo-50 via-slate-50 to-emerald-50 pb-10 text-slate-800">
+<body class="min-h-screen bg-[#eef2f8] text-slate-900">
 
-  <header class="mx-auto w-full max-w-xl px-5 pt-6 pb-4">
-    <a href="index.html" class="inline-flex items-center gap-1 text-sm font-semibold text-indigo-600">
-      <span class="text-lg leading-none">‹</span> Kembali
-    </a>
-    <h1 class="mt-3 text-2xl font-extrabold text-slate-900">Monitoring Insentif SC</h1>
-    <p class="mt-1 text-sm text-slate-500">Tim Tangerang · Rizky Daniel</p>
-  </header>
+  <!-- Header -->
+  <div class="mx-auto w-full max-w-xl px-5 pt-6 pb-4">
+    <div class="flex items-center justify-between">
+      <a id="btnKembali" href="index.html" class="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow" aria-label="Kembali">
+        <i data-lucide="arrow-left" class="h-5 w-5"></i>
+      </a>
+      <div class="text-center">
+        <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Monitoring Insentif SC</p>
+        <p class="text-base font-bold">Monitoring Insentif SC</p>
+      </div>
+      <button id="navToggle" class="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow" aria-label="Menu">
+        <i data-lucide="menu" class="h-5 w-5"></i>
+      </button>
+    </div>
+  </div>
 
-  <main class="mx-auto w-full max-w-xl px-4">
-    <section class="rounded-3xl bg-white p-5 shadow-sm">
+  <div class="mx-auto w-full max-w-xl px-4 pb-10">
+
+    <!-- Kartu judul -->
+    <div class="rounded-[28px] bg-[#0b0d12] p-6 text-white shadow-xl">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Tim Tangerang · ASM Rizky Daniel</p>
+      <h1 id="judulUtama" class="mt-2 text-2xl font-extrabold">Monitoring Insentif SC</h1>
+      <p id="subJudul" class="mt-1 text-sm text-slate-400">Daftar PSR</p>
+    </div>
+
+    <!-- Pesan status -->
+    <p id="pesan" class="mt-4 hidden rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800"></p>
+
+    <!-- Tampilan 1: daftar PSR -->
+    <div id="viewPsr" class="mt-4 rounded-[28px] bg-white p-5 shadow">
       <div class="flex items-center justify-between gap-3">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Daftar PSR</p>
-          <p id="jumlahPsr" class="mt-1 text-2xl font-extrabold text-slate-900">-</p>
+          <p class="text-sm font-bold">Daftar PSR</p>
+          <p id="jumlahPsr" class="text-xs text-slate-500">0 PSR</p>
         </div>
-        <span id="statusBadge" class="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-600">Memuat</span>
+        <span class="status-badge rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">Memuat</span>
       </div>
 
       <input id="cariPsr" type="search" placeholder="Cari nama PSR..."
-             class="mt-4 w-full rounded-2xl bg-slate-100 px-4 py-2.5 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-indigo-200">
+             class="mt-4 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400">
 
-      <p id="listKosong" class="mt-4 hidden text-sm text-slate-500"></p>
-      <ol id="listPsr" class="mt-2 divide-y divide-slate-100"></ol>
-    </section>
+      <ul id="listPsr" class="mt-4 space-y-1"></ul>
+      <p id="listKosong" class="hidden py-8 text-center text-sm text-slate-500">Tidak ada PSR.</p>
+    </div>
 
-    <p id="sumberInfo" class="mt-3 text-center text-[11px] text-slate-500"></p>
-  </main>
+    <!-- Tampilan 2: daftar outlet per PSR -->
+    <div id="viewOutlet" class="hidden">
 
-  <script src="sheet.js"></script>
-  <script src="nav.js"></script>
+      <div class="mt-4 rounded-[28px] bg-white p-5 shadow">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <p class="text-sm font-bold">Ringkasan</p>
+            <p id="jumlahOutlet" class="text-xs text-slate-500">0 outlet</p>
+          </div>
+          <span class="status-badge rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">Memuat</span>
+        </div>
+        <div class="mt-4 grid grid-cols-2 gap-3">
+          <div class="rounded-2xl bg-slate-50 p-4">
+            <p class="text-xs text-slate-500">Jumlah outlet</p>
+            <p id="rkJumlah" class="mt-1 text-base font-bold">0</p>
+          </div>
+          <div class="rounded-2xl bg-slate-50 p-4">
+            <p class="text-xs text-slate-500">Total</p>
+            <p id="rkTotal" class="mt-1 text-base font-bold">-</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 rounded-[28px] bg-white p-5 shadow">
+        <p class="text-sm font-bold">Daftar Outlet</p>
+        <p class="text-xs text-slate-500">Periode November 2026, urut dari nilai tertinggi</p>
+        <ul id="listOutlet" class="mt-4 space-y-1"></ul>
+        <p id="listOutletKosong" class="hidden py-8 text-center text-sm text-slate-500">Belum ada outlet untuk periode November 2026.</p>
+      </div>
+
+    </div>
+
+  </div>
+
   <script>
-  (function () {
-    const SUMBER_PSR = "resumeGt";
-    const BADGE = {
-      memuat: ["Memuat", "bg-slate-100 text-slate-600"],
-      ok: ["Terbaru", "bg-emerald-50 text-emerald-600"],
-      cache: ["Dari cache", "bg-amber-50 text-amber-700"],
-      error: ["Gagal", "bg-rose-50 text-rose-600"],
-      kosong: ["Belum disambung", "bg-slate-100 text-slate-600"]
+    const el = id => document.getElementById(id);
+
+    const KUNCI_PSR = "resumeGt";
+    const KUNCI_INSENTIF = "insentifSc"; // ganti jika nama kunci di sheet.js berbeda
+    const PERIODE = "202611";
+    const LABEL_PERIODE = "November 2026";
+    const psrPilih = (new URLSearchParams(location.search).get("psr") || "").trim();
+
+    let semuaNama = [];
+    let daftarOutlet = [];
+    let adaNilai = false;
+    let totalNilai = 0;
+
+    const LABEL_STATUS = {
+      memuat: "Memuat",
+      ok: "Terhubung",
+      cache: "Terhubung",
+      kosong: "Belum terhubung",
+      error: "Gagal"
     };
-    const PESAN_STATUS = {
-      memuat: "Memuat daftar PSR...",
-      error: "Gagal mengambil data. Periksa link CSV di sheet.js.",
-      kosong: "Sumber belum disambungkan di sheet.js."
-    };
 
-    let semuaPsr = [];
-
-    const $ = id => document.getElementById(id);
-
-    // cari kolom nama PSR di header (toleran terhadap huruf besar/kecil)
-    function cariKolomPsr(header) {
-      const persis = header.find(h => String(h).trim().toUpperCase() === "NAMA PSR");
-      if (persis) return persis;
-      return header.find(h => /psr/i.test(String(h))) || null;
+    function siap() {
+      return typeof SheetData !== "undefined" && typeof SheetData.get === "function";
     }
 
-    // mengembalikan null jika kolom PSR tidak ditemukan
-    function ambilNamaPsr(d) {
-      const kolom = cariKolomPsr(d.header || []);
-      if (!kolom) return null;
-      const hasil = [];
-      (d.objects || []).forEach(r => {
-        const nama = String(r[kolom] == null ? "" : r[kolom]).trim();
-        if (!nama || /^(total|jumlah)/i.test(nama)) return;
-        if (!hasil.includes(nama)) hasil.push(nama);
+    function escHtml(s) {
+      return String(s ?? "").replace(/[&<>"']/g, c => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[c]));
+    }
+
+    function normal(s) {
+      return String(s ?? "").normalize("NFKC").replace(/\s+/g, " ").trim().toLocaleUpperCase("id-ID");
+    }
+
+    function toNum(v) {
+      if (typeof v === "number") return v;
+      if (typeof SheetData !== "undefined" && typeof SheetData.toNumber === "function") {
+        return Number(SheetData.toNumber(v)) || 0;
+      }
+      return Number(String(v ?? "").replace(/[^0-9-]/g, "")) || 0;
+    }
+
+    function rupiah(n) {
+      return "Rp " + Math.round(n).toLocaleString("id-ID");
+    }
+
+    function setBadge(status) {
+      document.querySelectorAll(".status-badge").forEach(b => {
+        b.textContent = LABEL_STATUS[status] || status;
       });
-      return hasil;
-    }
-
-    function tampilBadge(status) {
-      const b = BADGE[status] || BADGE.memuat;
-      const el = $("statusBadge");
-      el.textContent = b[0];
-      el.className = "rounded-full px-3 py-1 text-[11px] font-semibold " + b[1];
     }
 
     function tampilPesan(teks) {
-      const p = $("listKosong");
-      p.textContent = teks;
-      p.classList.remove("hidden");
+      const p = el("pesan");
+      p.textContent = teks || "";
+      p.classList.toggle("hidden", !teks);
     }
 
-    function sembunyikanPesan() {
-      $("listKosong").classList.add("hidden");
+    function cocokPeriode(teks) {
+      const t = normal(teks);
+      const angka = t.replace(/\D/g, "");
+      return angka.includes(PERIODE) || t.includes("NOV 2026") || t.includes("NOVEMBER 2026") || t.includes("NOV-2026");
     }
 
-    function tampilDaftar() {
-  const kata = ($("cariPsr").value || "").trim().toLowerCase();
-  const ol = $("listPsr");
-  ol.innerHTML = "";
+    function kolomPsr(header) {
+      let k = header.find(h => normal(h) === "NAMA PSR");
+      if (!k) k = header.find(h => normal(h).includes("PSR"));
+      return k || null;
+    }
 
-  const tampil = semuaPsr.filter(nama =>
-    nama.toLowerCase().includes(kata)
-  );
+    function kolomOutlet(header) {
+      let k = header.find(h => normal(h) === "NAMA OUTLET");
+      if (!k) k = header.find(h => normal(h).includes("OUTLET"));
+      if (!k) k = header.find(h => normal(h).includes("TOKO"));
+      return k || null;
+    }
 
-  tampil.forEach(nama => {
-    const li = document.createElement("li");
+    // Daftar nama PSR unik dari tab resumeGt
+    function ambilNamaPsr(d) {
+      const header = d.header || [];
+      const kolom = kolomPsr(header);
+      if (!kolom) return [];
 
-    const tautan = document.createElement("a");
-    tautan.href = "detail-psr.html?psr=" + encodeURIComponent(nama);
-    tautan.className =
-      "flex items-center gap-3 rounded-xl px-2 py-3 transition " +
-      "hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-300";
-    tautan.setAttribute("aria-label", "Buka detail " + nama);
+      const hasil = [];
+      const sudah = new Set();
+      for (const baris of d.objects || []) {
+        const nama = String(baris[kolom] ?? "").trim();
+        if (!nama) continue;
+        const n = normal(nama);
+        if (n.startsWith("TOTAL") || n.startsWith("JUMLAH")) continue;
+        if (sudah.has(n)) continue;
+        sudah.add(n);
+        hasil.push(nama);
+      }
+      return hasil;
+    }
 
-    const nomor = document.createElement("span");
-    nomor.className =
-      "flex h-7 w-7 shrink-0 items-center justify-center " +
-      "rounded-full bg-indigo-50 text-xs font-bold text-indigo-600";
-    nomor.textContent = semuaPsr.indexOf(nama) + 1;
-
-    const teks = document.createElement("span");
-    teks.className = "min-w-0 flex-1 break-words text-sm font-semibold text-slate-800";
-    teks.textContent = nama;
-
-    const panah = document.createElement("span");
-    panah.className = "shrink-0 text-xl text-indigo-500";
-    panah.textContent = "›";
-
-    tautan.append(nomor, teks, panah);
-    li.appendChild(tautan);
-    ol.appendChild(li);
-  });
-
-  if (tampil.length === 0) {
-    tampilPesan(
-      semuaPsr.length
-        ? "Tidak ada PSR yang cocok."
-        : "Belum ada data PSR."
-    );
-  } else {
-    sembunyikanPesan();
-  }
-}
-
-    function render() {
-      const d = window.SheetData
-        ? SheetData.get(SUMBER_PSR)
-        : { status: "error", header: [], objects: [] };
-
-      tampilBadge(d.status);
-
-      const nama = ambilNamaPsr(d);
-      if (nama === null) {
-        semuaPsr = [];
-        const ol = $("listPsr");
-        if (ol) ol.innerHTML = "";
-        $("jumlahPsr").textContent = "-";
-        if (d.status === "ok") {
-          tampilPesan("Kolom PSR tidak ditemukan di sheet. Lihat Console (F12).");
-          console.log("header resume by gt:", d.header);
-        } else {
-          tampilPesan(PESAN_STATUS[d.status] || "Memuat daftar PSR...");
-        }
-      } else {
-        semuaPsr = nama;
-        $("jumlahPsr").textContent = semuaPsr.length + " PSR";
-        tampilDaftar();
+    // Daftar outlet milik PSR terpilih, hanya periode 202611
+    function olahOutlet(d) {
+      const header = d.header || [];
+      const kPsr = kolomPsr(header);
+      const kOutlet = kolomOutlet(header);
+      if (!kPsr || !kOutlet) {
+        return { error: "Kolom NAMA PSR atau NAMA OUTLET tidak ditemukan di tab insentifSc." };
       }
 
-      $("sumberInfo").textContent = d.updatedAt
-        ? "Diperbarui " + new Date(d.updatedAt).toLocaleString("id-ID")
-        : "Sumber: sheet resume by gt";
+      // Mode 1: ada kolom bernama persis 202611 (nilai per outlet ada di kolom itu)
+      // Mode 2: ada kolom PERIODE, lalu baris dengan periode 202611 dijumlahkan
+      let mode = null;
+      let kNilai = null;
+      let kPeriode = null;
+
+      const kBulan = header.find(h => normal(h) === PERIODE);
+      if (kBulan) {
+        mode = "kolom";
+        kNilai = kBulan;
+      } else {
+        kPeriode = header.find(h => ["PERIODE", "PERIOD", "BULAN", "PERIODE BULAN"].includes(normal(h)));
+        if (kPeriode) {
+          mode = "baris";
+          kNilai = header.find(h => /INSENTIF|NOMINAL|NILAI|BONUS/.test(normal(h))) || null;
+        }
+      }
+
+      if (!mode) {
+        console.log("Header insentifSc:", header);
+        return { error: "Kolom periode " + PERIODE + " tidak ditemukan di tab insentifSc." };
+      }
+
+      const peta = new Map();
+      let psrAktif = "";
+
+      for (const baris of d.objects || []) {
+        const psr = String(baris[kPsr] ?? "").trim();
+        const outlet = String(baris[kOutlet] ?? "").trim();
+
+        if (psr) {
+          if (/^(TOTAL|JUMLAH|GRAND)/.test(normal(psr))) { psrAktif = ""; continue; }
+          psrAktif = psr;
+        }
+        if (!outlet || /^(TOTAL|JUMLAH|GRAND)/.test(normal(outlet))) continue;
+
+        const pemilik = psr || psrAktif;
+        if (normal(pemilik) !== normal(psrPilih)) continue;
+
+        let nilai;
+        if (mode === "kolom") {
+          const raw = baris[kNilai];
+          if (String(raw ?? "").trim() === "") continue;
+          nilai = toNum(raw);
+        } else {
+          if (!cocokPeriode(baris[kPeriode])) continue;
+          nilai = kNilai ? toNum(baris[kNilai]) : 0;
+        }
+
+        const kunci = normal(outlet);
+        const ada = peta.get(kunci);
+        if (ada) ada.nilai += nilai;
+        else peta.set(kunci, { nama: outlet, nilai });
+      }
+
+      const list = [...peta.values()].sort((a, b) =>
+        b.nilai - a.nilai || a.nama.localeCompare(b.nama, "id")
+      );
+      const total = list.reduce((s, o) => s + o.nilai, 0);
+
+      return {
+        list,
+        total,
+        adaNilai: mode === "kolom" || !!kNilai
+      };
     }
 
-    $("cariPsr").addEventListener("input", tampilDaftar);
-    if (window.lucide) window.lucide.createIcons();
+    function tampilDaftarPsr() {
+      const q = normal(el("cariPsr").value);
+      const hasil = semuaNama.filter(n => normal(n).includes(q));
+
+      el("jumlahPsr").textContent = hasil.length + " PSR";
+      el("listPsr").innerHTML = hasil.map((n, i) => `
+        <li>
+          <a href="monitoring-insentif-sc.html?psr=${encodeURIComponent(n)}" class="flex items-center gap-3 rounded-2xl px-3 py-3 hover:bg-slate-50">
+            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">${i + 1}</span>
+            <span class="flex-1 text-sm font-semibold">${escHtml(n)}</span>
+            <span class="text-lg text-slate-400">›</span>
+          </a>
+        </li>`).join("");
+      el("listKosong").classList.toggle("hidden", hasil.length > 0);
+    }
+
+    function tampilOutlet() {
+      el("listOutlet").innerHTML = daftarOutlet.map((o, i) => `
+        <li class="flex items-center gap-3 rounded-2xl px-3 py-3">
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">${i + 1}</span>
+          <span class="flex-1 text-sm font-semibold">${escHtml(o.nama)}</span>
+          ${adaNilai ? `<span class="whitespace-nowrap text-sm font-bold text-slate-700">${rupiah(o.nilai)}</span>` : ""}
+        </li>`).join("");
+
+      el("jumlahOutlet").textContent = daftarOutlet.length + " outlet";
+      el("rkJumlah").textContent = daftarOutlet.length;
+      el("rkTotal").textContent = adaNilai ? rupiah(totalNilai) : "-";
+      el("listOutletKosong").classList.toggle("hidden", daftarOutlet.length > 0);
+    }
+
+    function renderPsr() {
+      const d = SheetData.get(KUNCI_PSR);
+      setBadge(d.status);
+
+      let teks = "";
+      if (d.status === "kosong") teks = "Link resumeGt belum diisi di sheet.js.";
+      else if (d.status === "error") teks = "Data resumeGt gagal dimuat. Pastikan tab sudah dipublish sebagai CSV.";
+
+      semuaNama = (d.status === "ok" || d.status === "cache") ? ambilNamaPsr(d) : [];
+      tampilPesan(teks);
+      tampilDaftarPsr();
+    }
+
+    function renderOutlet() {
+      el("judulUtama").textContent = psrPilih;
+      el("subJudul").textContent = "Periode " + LABEL_PERIODE;
+      el("btnKembali").href = "monitoring-insentif-sc.html";
+
+      const d = SheetData.get(KUNCI_INSENTIF);
+      setBadge(d.status);
+
+      daftarOutlet = [];
+      totalNilai = 0;
+      adaNilai = false;
+
+      let teks = "";
+      if (d.status === "kosong") {
+        teks = "Link insentifSc belum diisi di sheet.js.";
+      } else if (d.status === "error") {
+        teks = "Data insentifSc gagal dimuat. Pastikan tab sudah dipublish sebagai CSV.";
+      } else if (d.status === "ok" || d.status === "cache") {
+        const hasil = olahOutlet(d);
+        if (hasil.error) {
+          teks = hasil.error;
+        } else {
+          daftarOutlet = hasil.list;
+          totalNilai = hasil.total;
+          adaNilai = hasil.adaNilai;
+        }
+      }
+
+      tampilPesan(teks);
+      tampilOutlet();
+    }
+
+    function render() {
+      if (!siap()) {
+        setBadge("error");
+        tampilPesan("sheet.js belum termuat dengan benar. Periksa error sintaks di sheet.js.");
+        return;
+      }
+      if (psrPilih) renderOutlet();
+      else renderPsr();
+    }
+
+    // Inisialisasi
+    el("viewPsr").classList.toggle("hidden", !!psrPilih);
+    el("viewOutlet").classList.toggle("hidden", !psrPilih);
+    el("cariPsr").addEventListener("input", tampilDaftarPsr);
+    if (siap() && typeof SheetData.onUpdate === "function") SheetData.onUpdate(render);
     render();
-    if (window.SheetData) SheetData.onUpdate(render);
-  })();
+    if (window.lucide) lucide.createIcons();
   </script>
 </body>
 </html>
