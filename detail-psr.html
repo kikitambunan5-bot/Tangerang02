@@ -601,14 +601,19 @@
   })();
   </script>
   <script>
-/* DAFTAR OUTLET PER PSR (urut sales November tertinggi) */
+/* DAFTAR OUTLET PER PSR (urut sales November tertinggi, 10 per halaman) */
 (function () {
   "use strict";
+
+  const PER_HALAMAN = 10;
 
   const psr = (new URLSearchParams(window.location.search).get("psr") || "").trim();
   if (!psr) return;
 
   const $ = id => document.getElementById(id);
+
+  let daftar = [];   // seluruh outlet, sudah diurutkan
+  let halaman = 0;   // indeks halaman, mulai dari 0
 
   function normal(v) {
     return String(v == null ? "" : v)
@@ -626,23 +631,14 @@
   // Mencari nama sumber "outlet:NAMA PSR" di sheet.js (tidak peka huruf besar/kecil dan spasi)
   function cariKunci() {
     const target = normal("outlet:" + psr);
-    const daftar = window.SheetData && SheetData.daftarSumber ? SheetData.daftarSumber() : [];
-    const cocok = daftar.find(x => normal(x.nama) === target);
+    const sumber = window.SheetData && SheetData.daftarSumber ? SheetData.daftarSumber() : [];
+    const cocok = sumber.find(x => normal(x.nama) === target);
     return cocok ? cocok.nama : "outlet:" + psr;
   }
 
-  // Prioritas kolom sales November:
-  // 1) kolom bernama 202611, 2) kolom SALES yang menyebut NOV/202611,
-  // 3) semua kolom SALES (misalnya SALES RETAIL + SALES GROSIR) yang dijumlahkan
+  // Sales November = kolom bernama 202611
   function cariKolomSales(header) {
-    const nama = header.filter(Boolean);
-    const persis = nama.filter(h => normal(h) === "202611");
-    if (persis.length) return persis;
-
-    const nov = nama.filter(h => /SALES/.test(normal(h)) && /NOV|202611/.test(normal(h)));
-    if (nov.length) return nov;
-
-    return nama.filter(h => /SALES/.test(normal(h)) && !/TARGET|ACV|TOTAL|%/.test(normal(h)));
+    return header.filter(h => normal(h) === "202611");
   }
 
   function setRingkas(jumlah, total) {
@@ -660,12 +656,70 @@
     $("pesanOutlet").classList.add("hidden");
   }
 
-  function gambarDaftar(list) {
+  function kosongkan(pesan) {
+    daftar = [];
+    $("listOutlet").replaceChildren();
+    const pg = $("pagerOutlet");
+    if (pg) pg.classList.add("hidden");
+    setRingkas("-", "-");
+    tampilPesan(pesan);
+  }
+
+  // Membuat tombol halaman otomatis (sekali saja) di bawah daftar outlet
+  function pastikanPager() {
+    let pager = $("pagerOutlet");
+    if (pager) return pager;
+
+    pager = document.createElement("div");
+    pager.id = "pagerOutlet";
+    pager.className = "mt-4 hidden";
+
+    const baris = document.createElement("div");
+    baris.className = "flex items-center justify-between gap-2";
+
+    const prev = document.createElement("button");
+    prev.id = "outletPrev";
+    prev.type = "button";
+    prev.textContent = "‹ Sebelumnya";
+    prev.className = "shrink-0 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 disabled:opacity-40";
+    prev.addEventListener("click", () => gantiHalaman(-1));
+
+    const next = document.createElement("button");
+    next.id = "outletNext";
+    next.type = "button";
+    next.textContent = "Berikutnya ›";
+    next.className = "shrink-0 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 disabled:opacity-40";
+    next.addEventListener("click", () => gantiHalaman(1));
+
+    const info = document.createElement("p");
+    info.id = "outletInfo";
+    info.className = "min-w-0 text-center text-[11px] text-slate-500";
+
+    baris.append(prev, info, next);
+    pager.appendChild(baris);
+    $("listOutlet").insertAdjacentElement("afterend", pager);
+    return pager;
+  }
+
+  function gantiHalaman(arah) {
+    halaman += arah;
+    gambarHalaman();
+    const bagian = $("listOutlet").closest("section");
+    if (bagian) bagian.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function gambarHalaman() {
+    const totalHalaman = Math.max(1, Math.ceil(daftar.length / PER_HALAMAN));
+    halaman = Math.min(Math.max(halaman, 0), totalHalaman - 1);
+
+    const awal = halaman * PER_HALAMAN;
+    const potongan = daftar.slice(awal, awal + PER_HALAMAN);
+    const tertinggi = daftar[0] ? daftar[0].sales : 0;
+
     const ol = $("listOutlet");
     ol.replaceChildren();
-    const tertinggi = list[0] ? list[0].sales : 0;
 
-    list.forEach((item, i) => {
+    potongan.forEach((item, i) => {
       const li = document.createElement("li");
       li.className = "py-3";
 
@@ -674,7 +728,7 @@
 
       const no = document.createElement("span");
       no.className = "flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-xs font-bold text-indigo-600";
-      no.textContent = i + 1;
+      no.textContent = awal + i + 1;
 
       const teks = document.createElement("div");
       teks.className = "min-w-0 flex-1";
@@ -700,6 +754,16 @@
       li.appendChild(baris);
       ol.appendChild(li);
     });
+
+    const pager = pastikanPager();
+    pager.classList.toggle("hidden", daftar.length <= PER_HALAMAN);
+
+    $("outletPrev").disabled = halaman === 0;
+    $("outletNext").disabled = halaman >= totalHalaman - 1;
+    $("outletInfo").textContent =
+      "Halaman " + (halaman + 1) + " dari " + totalHalaman +
+      " · outlet " + (awal + 1) + "–" + (awal + potongan.length) +
+      " dari " + daftar.length;
   }
 
   function render() {
@@ -708,24 +772,20 @@
       ? SheetData.get(kunci)
       : { status: "kosong", header: [], objects: [] };
 
-    $("listOutlet").replaceChildren();
     sembunyikanPesan();
 
     if (d.status === "memuat") {
-      setRingkas("-", "-");
-      tampilPesan("Memuat daftar outlet...");
+      kosongkan("Memuat daftar outlet...");
       return;
     }
 
     if (d.status === "kosong") {
-      setRingkas("-", "-");
-      tampilPesan("Daftar outlet untuk PSR ini belum disambungkan di sheet.js.");
+      kosongkan("Daftar outlet untuk PSR ini belum disambungkan di sheet.js.");
       return;
     }
 
     if (!(d.objects || []).length) {
-      setRingkas("-", "-");
-      tampilPesan(
+      kosongkan(
         d.status === "error"
           ? "Gagal memuat daftar outlet. Periksa link CSV di sheet.js."
           : "Belum ada data outlet untuk PSR ini."
@@ -738,8 +798,7 @@
     const colSales = cariKolomSales(header);
 
     if (!colOutlet || !colSales.length) {
-      setRingkas("-", "-");
-      tampilPesan("Kolom outlet atau sales November tidak ditemukan. Buka Console (F12) untuk melihat header.");
+      kosongkan("Kolom outlet atau sales November tidak ditemukan. Buka Console (F12) untuk melihat header.");
       console.log("Header tab PSR:", header);
       return;
     }
@@ -759,14 +818,14 @@
       .sort((a, b) => b.sales - a.sales || a.nama.localeCompare(b.nama, "id"));
 
     if (!list.length) {
-      setRingkas("-", "-");
-      tampilPesan("Belum ada data outlet untuk PSR ini.");
+      kosongkan("Belum ada data outlet untuk PSR ini.");
       return;
     }
 
     const total = list.reduce((s, x) => s + x.sales, 0);
+    daftar = list;
     setRingkas(list.length + " outlet", rupiah(total));
-    gambarDaftar(list);
+    gambarHalaman();
   }
 
   render();
