@@ -837,6 +837,7 @@ function pilihBulan(kode) {
     renderRingkas(lastData);
     gambarGrafik(lastData);
   }
+  renderTabBaru();
 }
       /* ===================== PERINGKAT SALES ===================== */
       const RANK_CLS = [
@@ -1002,11 +1003,123 @@ function render() {
   gambarGrafik(data);
   renderTabBaru();
 }
-      /* ===================== DATA TAB BARU ===================== */
+      /* ===================== DATA TAB BARU: DETAIL NOVEMBER ===================== */
+const BULAN_DETAIL = "202611";    // panel detail hanya untuk bulan ini
+const SUMBER_DETAIL = "tabBaru";  // nama sumber di sheet.js
+const KUNCI_DETAIL = ["tRetail", "sRetail", "tGrosir", "sGrosir"];
+
+// membaca angka dengan pemisah koma maupun titik ("470,040,135" atau "470.040.135")
+function angkaDetail(v) {
+  let s = String(v === undefined || v === null ? "" : v).replace(/[^0-9.,-]/g, "");
+  const titik = (s.match(/\./g) || []).length;
+  const koma = (s.match(/,/g) || []).length;
+  if (titik && koma) {
+    // pemisah yang muncul paling akhir adalah desimal
+    if (s.lastIndexOf(",") > s.lastIndexOf(".")) s = s.replace(/\./g, "").replace(",", ".");
+    else s = s.replace(/,/g, "");
+  } else if (titik + koma > 1) {
+    s = s.replace(/[.,]/g, "");              // lebih dari satu pemisah = pemisah ribuan
+  } else if (titik + koma === 1) {
+    const ekor = s.split(/[.,]/)[1];
+    s = ekor.length === 3 ? s.replace(/[.,]/g, "") : s.replace(",", ".");
+  }
+  const n = Number(s);
+  return isFinite(n) ? n : 0;
+}
+
+function hitungDetail(objects) {
+  const baris = objects
+    .map(r => ({
+      nama: String(r["NAMA PSR"] || "").trim(),
+      v: {
+        tRetail: angkaDetail(r["TARGET RETAIL"]),
+        sRetail: angkaDetail(r["SALES RETAIL"]),
+        tGrosir: angkaDetail(r["TARGET GROSIR"]),
+        sGrosir: angkaDetail(r["SALES GROSIR"])
+      }
+    }))
+    .filter(b => KUNCI_DETAIL.some(k => b.v[k] !== 0));
+  if (!baris.length) return null;
+
+  const jumlah = { tRetail: 0, sRetail: 0, tGrosir: 0, sGrosir: 0 };
+  baris.forEach(b => KUNCI_DETAIL.forEach(k => { jumlah[k] += b.v[k]; }));
+
+  // 1) baris total berlabel: NAMA PSR kosong, atau berisi kata "total" / "jumlah"
+  let total = baris.filter(b => !b.nama || /total|jumlah/i.test(b.nama)).pop();
+
+  // 2) baris total tanpa label: nilainya sama dengan jumlah semua baris lain
+  if (!total && baris.length >= 3) {
+    total = baris.find(b => KUNCI_DETAIL.every(k =>
+      Math.abs(jumlah[k] - 2 * b.v[k]) <= Math.max(baris.length, Math.abs(b.v[k]) * 0.001)));
+  }
+
+  if (total) {
+    return { ...total.v, sumber: "Diambil dari baris total" + (total.nama ? " (" + total.nama + ")" : "") };
+  }
+  return { ...jumlah, sumber: "Dijumlahkan dari " + baris.length + " PSR" };
+}
+
+function blokDetail(judul, target, sales) {
+  const pct = target > 0 ? (sales / target) * 100 : null;
+  const teksPct = pct === null ? "-" : pct.toLocaleString("id-ID", { maximumFractionDigits: 1 }) + "%";
+  const lebar = pct === null ? 0 : Math.min(100, Math.max(0, pct));
+  return (
+    '<div class="rounded-2xl bg-white p-3">' +
+      '<div class="flex items-center justify-between">' +
+        '<p class="text-xs font-bold text-slate-800">' + judul + '</p>' +
+        '<span class="rounded-full bg-indigo-600 px-2.5 py-1 text-[11px] font-bold text-white">' + teksPct + '</span>' +
+      '</div>' +
+      '<div class="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">' +
+        '<div class="h-full rounded-full bg-indigo-600" style="width:' + lebar + '%"></div>' +
+      '</div>' +
+      '<div class="mt-3 flex items-baseline justify-between gap-2">' +
+        '<span class="text-[11px] font-semibold text-slate-500">Target</span>' +
+        '<span class="break-words text-right text-xs font-bold text-slate-800">' + rupiahPenuh(target) + '</span>' +
+      '</div>' +
+      '<div class="mt-1 flex items-baseline justify-between gap-2">' +
+        '<span class="text-[11px] font-semibold text-slate-500">Sales</span>' +
+        '<span class="break-words text-right text-xs font-bold text-slate-800">' + rupiahPenuh(sales) + '</span>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
 function renderTabBaru() {
-  const d = SheetData.get("tabBaru");
-  console.log("tabBaru:", d.status, "| jumlah baris:", d.objects.length);
-  // tampilan untuk tab ini nanti ditulis di sini
+  const kartu = document.getElementById("mainCard");
+  if (!kartu) { console.warn("Elemen #mainCard tidak ditemukan"); return; }
+
+  let panel = document.getElementById("detailBulan");
+  if (!panel) {
+    panel = document.createElement("div");
+    panel.id = "detailBulan";
+    kartu.appendChild(panel);
+  }
+
+  // panel hanya tampil setelah balok / chip Nov 26 ditekan
+  if (bulanAktif !== BULAN_DETAIL) {
+    panel.className = "hidden";
+    panel.innerHTML = "";
+    return;
+  }
+
+  const d = (window.SheetData && SheetData.get(SUMBER_DETAIL)) || {};
+  const detail = hitungDetail(d.objects || []);
+  panel.className = "mt-4 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4";
+
+  if (!detail) {
+    panel.innerHTML = '<p class="text-xs text-slate-500">' +
+      (d.status === "memuat" ? "Memuat detail..." : "Detail belum terbaca dari sheet.") + '</p>';
+    return;
+  }
+
+  panel.innerHTML =
+    '<p class="text-sm font-bold text-slate-800">Detail ' + labelPanjang(BULAN_DETAIL) + '</p>' +
+    '<div class="mt-3 grid gap-3 sm:grid-cols-2">' +
+      blokDetail("Retail", detail.tRetail, detail.sRetail) +
+      blokDetail("Grosir", detail.tGrosir, detail.sGrosir) +
+    '</div>' +
+    '<p id="detailSumber" class="mt-3 text-[10px] text-slate-500"></p>';
+  document.getElementById("detailSumber").textContent = detail.sumber;
 }
       /* ===================== MULAI ===================== */
 const btnPrev = document.getElementById("btnBulanPrev");
