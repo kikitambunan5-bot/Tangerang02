@@ -1000,6 +1000,13 @@ function render() {
   if (typeof tampilWaktu === "function") tampilWaktu();
   renderRingkas(data);
   gambarGrafik(data);
+  renderTabBaru();
+}
+      /* ===================== DATA TAB BARU ===================== */
+function renderTabBaru() {
+  const d = SheetData.get("tabBaru");
+  console.log("tabBaru:", d.status, "| jumlah baris:", d.objects.length);
+  // tampilan untuk tab ini nanti ditulis di sini
 }
       /* ===================== MULAI ===================== */
 const btnPrev = document.getElementById("btnBulanPrev");
