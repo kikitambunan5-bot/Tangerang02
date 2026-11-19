@@ -21,6 +21,7 @@
         "outlet:MESDA HUTABALIAN": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQDjOZV7Bgcr6RzOr7GaRCY8qYU41MhD6HzoXwSrKqgRocTrke9twbcKS8LF3w5H1KwZKqxbmo-DnS9/pub?gid=660883596&single=true&output=csv",
         "outlet:YUSNIA SUPANDI": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQDjOZV7Bgcr6RzOr7GaRCY8qYU41MhD6HzoXwSrKqgRocTrke9twbcKS8LF3w5H1KwZKqxbmo-DnS9/pub?gid=1064984562&single=true&output=csv",
         "outlet:YUSRAN MASYHURI": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQDjOZV7Bgcr6RzOr7GaRCY8qYU41MhD6HzoXwSrKqgRocTrke9twbcKS8LF3w5H1KwZKqxbmo-DnS9/pub?gid=1918920667&single=true&output=csv",
+        insentifSc: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQDjOZV7Bgcr6RzOr7GaRCY8qYU41MhD6HzoXwSrKqgRocTrke9twbcKS8LF3w5H1KwZKqxbmo-DnS9/pub?gid=1849037455&single=true&output=csv",
     },
     refreshMs: 60000,   // pembaruan otomatis dalam milidetik (60000 = 1 menit). 0 = nonaktif
     pakaiCache: true    // simpan data terakhir di browser agar tampil cepat dan tetap ada jika gagal
