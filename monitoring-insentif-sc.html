@@ -9,7 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="sheet.js"></script>
-  <script src="nav.js"></script>
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
   </style>
@@ -131,6 +130,22 @@
 
   </div>
 
+  <!-- Menu samping (dibuat langsung di halaman, tanpa nav.js) -->
+  <div id="navOverlay" class="fixed inset-0 z-40 hidden bg-black/40"></div>
+  <aside id="navDrawer" class="fixed right-0 top-0 z-50 h-full w-72 translate-x-full bg-white p-5 shadow-2xl transition-transform duration-300">
+    <div class="mb-6 flex items-center justify-between">
+      <p class="font-bold">Menu</p>
+      <button id="navClose" class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100" aria-label="Tutup">
+        <i data-lucide="x" class="h-4 w-4"></i>
+      </button>
+    </div>
+    <nav class="space-y-2">
+      <a href="monitoring-kunjungan.html" class="block rounded-xl px-4 py-3 text-sm font-semibold hover:bg-slate-100">Monitoring Kunjungan</a>
+      <a href="data-tim-sales.html" class="block rounded-xl px-4 py-3 text-sm font-semibold hover:bg-slate-100">Data Tim Sales</a>
+      <a href="monitoring-insentif-sc.html" class="block rounded-xl px-4 py-3 text-sm font-semibold hover:bg-slate-100">Monitoring Insentif SC</a>
+    </nav>
+  </aside>
+
   <script>
     const el = id => document.getElementById(id);
 
@@ -215,6 +230,17 @@
       const p = el("pesan");
       p.textContent = teks || "";
       p.classList.toggle("hidden", !teks);
+    }
+
+    // Menu samping
+    function bukaMenu() {
+      el("navDrawer").classList.remove("translate-x-full");
+      el("navOverlay").classList.remove("hidden");
+    }
+
+    function tutupMenu() {
+      el("navDrawer").classList.add("translate-x-full");
+      el("navOverlay").classList.add("hidden");
     }
 
     // Daftar nama PSR unik dari tab resumeGt
@@ -362,7 +388,8 @@
       el("listOutletKosong").classList.toggle("hidden", daftar.length > 0);
     }
 
-    // Menampilkan 15 SKU per halaman, dengan detail di sebelah kanan setiap produk
+    // 15 SKU per halaman, detail angka di sebelah kanan setiap produk.
+    // Kartu hijau jika Realisasi UB lebih besar dari Qty ST / bulan UB.
     function renderProduk() {
       const produk = outletDetail
         ? [...outletDetail.produk.values()].sort((a, b) =>
@@ -474,6 +501,12 @@
       if (psrPilih) renderInsentif();
       else renderPsr();
     }
+
+    // Event menu
+    el("navToggle").addEventListener("click", bukaMenu);
+    el("navClose").addEventListener("click", tutupMenu);
+    el("navOverlay").addEventListener("click", tutupMenu);
+    document.addEventListener("keydown", e => { if (e.key === "Escape") tutupMenu(); });
 
     el("cariPsr").addEventListener("input", tampilDaftarPsr);
 
