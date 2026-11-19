@@ -172,108 +172,55 @@
         </div>
       </section>
 
-      <!-- Kartu utama: pencapaian + grafik -->
-      <section id="mainCard" class="relative mt-5 overflow-hidden rounded-[26px] bg-ink-950 p-4 shadow-[0_24px_50px_-24px_rgba(7,11,20,.85)] ring-1 ring-white/5">
-        <div aria-hidden="true" class="blob-a pointer-events-none absolute -right-14 -top-16 h-40 w-40 rounded-full bg-brand-500/35 blur-[48px]"></div>
-        <div aria-hidden="true" class="blob-b pointer-events-none absolute -bottom-20 -left-12 h-44 w-44 rounded-full bg-emerald-500/20 blur-[52px]"></div>
-        <div id="shine" aria-hidden="true" class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500"
-             style="background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 0%), rgba(255,255,255,.14), transparent 60%);"></div>
+      <!-- Kartu utama: total sales 202601 s/d 202611 -->
+<section id="mainCard" class="mx-4 mt-4 rounded-3xl bg-white p-5 shadow-sm">
+  <div class="flex items-start justify-between gap-4">
+    <div class="min-w-0">
+      <p id="pctLabel" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Sales</p>
+      <p id="pctNum" class="mt-1 text-2xl font-extrabold text-slate-900">-</p>
+      <p id="pctBadge" class="mt-1 text-xs text-slate-500">Memuat data...</p>
+    </div>
+    <div class="relative h-20 w-20 shrink-0">
+      <svg viewBox="0 0 80 80" class="h-20 w-20 -rotate-90">
+        <circle cx="40" cy="40" r="34" fill="none" stroke="#e2e8f0" stroke-width="7"/>
+        <circle id="ringBar" cx="40" cy="40" r="34" fill="none" stroke="#4f46e5" stroke-width="7"
+                stroke-linecap="round" stroke-dasharray="213.63" stroke-dashoffset="213.63"
+                style="transition: stroke-dashoffset .6s ease"/>
+      </svg>
+      <span id="ringText" class="absolute inset-0 flex items-center justify-center text-sm font-bold text-slate-800">0%</span>
+    </div>
+  </div>
 
-        <div class="relative flex items-center justify-between gap-3">
-          <div class="min-w-0">
-                        <p id="pctLabel" class="text-[9.5px] font-bold uppercase tracking-[0.16em] text-white/45">Pencapaian Tim · Bulan Ini</p>
-            <p class="mt-1.5 text-[30px] font-extrabold leading-none tracking-tight text-white">
-              <span id="pctNum">-</span><span id="pctSign" class="text-base font-bold text-white/60"></span>
-            </p>
-            <p id="pctBadge" class="mt-2 text-[10.5px] font-semibold text-white/50">Memuat...</p>
-          </div>
+  <div class="mt-4 flex items-center gap-2">
+    <button id="btnBulanPrev" type="button"
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-lg text-slate-600 disabled:opacity-30">‹</button>
+    <div id="bulanStrip" class="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1"></div>
+    <button id="btnBulanNext" type="button"
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-lg text-slate-600 disabled:opacity-30">›</button>
+  </div>
 
-          <div class="relative h-[76px] w-[76px] shrink-0">
-            <svg viewBox="0 0 80 80" class="-rotate-90 h-full w-full" aria-hidden="true">
-              <defs>
-                <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#8FB3FF" />
-                  <stop offset="100%" stop-color="#34D399" />
-                </linearGradient>
-              </defs>
-              <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="7" />
-              <circle id="ringBar" cx="40" cy="40" r="34" fill="none" stroke="url(#ringGrad)" stroke-width="7"
-                      stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6" class="ring-bar" />
-            </svg>
-            <div class="absolute inset-0 grid place-items-center">
-              <span id="ringText" class="text-[12px] font-extrabold text-white">0%</span>
-            </div>
-          </div>
-        </div>
+  <div class="mt-5 flex items-center justify-between">
+    <p class="text-sm font-bold text-slate-800">Total Sales 6 Bulan</p>
+    <span id="chartBadge" class="rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-600">Total sales</span>
+  </div>
+  <div id="barWrap" class="mt-3 flex h-24 items-end gap-2"></div>
+  <div id="barLabels" class="mt-2 flex gap-2 text-center text-[10px] font-medium text-slate-500"></div>
 
-                <!-- Badge sumber data -->
-        <div class="relative flex items-center justify-end">
-          <span id="chartBadge" class="rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-semibold text-white/60">Memuat</span>
-        </div>
-
-        <!-- Pilih bulan -->
-        <div class="relative mt-3 flex items-center gap-1.5">
-          <button id="btnBulanPrev" type="button" aria-label="Geser ke bulan sebelumnya"
-                  class="ripple grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/[0.06] text-white/70 ring-1 ring-inset ring-white/10 transition hover:bg-white/10 active:scale-95">
-            <i data-lucide="chevron-left" class="h-3.5 w-3.5"></i>
-          </button>
-          <div id="bulanStrip" class="relative flex min-w-0 flex-1 gap-1 overflow-x-auto py-0.5" style="scrollbar-width: none;"></div>
-          <button id="btnBulanNext" type="button" aria-label="Geser ke bulan berikutnya"
-                  class="ripple grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/[0.06] text-white/70 ring-1 ring-inset ring-white/10 transition hover:bg-white/10 active:scale-95">
-            <i data-lucide="chevron-right" class="h-3.5 w-3.5"></i>
-          </button>
-        </div>
-
-        <!-- Grafik -->
-        <div id="chartWrap" class="relative mt-3 h-[96px] touch-pan-y select-none">
-          <svg id="chartSvg" viewBox="0 0 320 96" preserveAspectRatio="none" class="h-full w-full overflow-visible" aria-hidden="true">
-            <defs>
-              <linearGradient id="gArea" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#5C8DFF" stop-opacity="0.45" />
-                <stop offset="100%" stop-color="#5C8DFF" stop-opacity="0" />
-              </linearGradient>
-              <linearGradient id="gLine" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stop-color="#8FB3FF" />
-                <stop offset="100%" stop-color="#34D399" />
-              </linearGradient>
-            </defs>
-            <g stroke="rgba(255,255,255,0.07)" stroke-width="1">
-              <line x1="0" y1="24" x2="320" y2="24" />
-              <line x1="0" y1="48" x2="320" y2="48" />
-              <line x1="0" y1="72" x2="320" y2="72" />
-            </g>
-            <path id="chartArea" fill="url(#gArea)" d="" />
-            <path id="chartLine" fill="none" stroke="url(#gLine)" stroke-width="2.5"
-                  stroke-linecap="round" stroke-linejoin="round" pathLength="1"
-                  stroke-dasharray="1" style="stroke-dashoffset: 1" class="line-draw" d="" />
-            <rect id="chartHit" x="0" y="0" width="320" height="96" fill="transparent" />
-          </svg>
-
-          <div id="chartDot" class="pointer-events-none absolute hidden h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white ring-4 ring-brand-400/40"></div>
-          <div id="chartTip" class="pointer-events-none absolute hidden whitespace-nowrap rounded-lg bg-white px-2.5 py-1.5 text-center shadow-xl">
-            <p id="tipVal" class="text-[11px] font-extrabold text-ink-900"></p>
-            <p id="tipLabel" class="text-[9px] font-semibold text-slate-500"></p>
-          </div>
-        </div>
-
-        <!-- Label bulan di bawah grafik (diisi script) -->
-        <div id="chartLabels" class="relative mt-1.5 flex items-center justify-between gap-1 text-[9px] font-semibold text-white/40"></div>
-        <!-- Ringkasan cepat (ketuk untuk ke dashboard) -->
-        <div class="relative mt-4 grid grid-cols-3 divide-x divide-white/10 rounded-2xl bg-white/[0.04] py-2 ring-1 ring-inset ring-white/10">
-          <button type="button" data-goto class="ripple rounded-xl px-3 py-1 text-left transition hover:bg-white/[0.06]">
-            <p class="text-[9px] font-bold uppercase tracking-wider text-white/40">Kunjungan</p>
-            <p id="landingKunjungan" class="mt-0.5 text-[13px] font-extrabold text-white">-</p>
-          </button>
-          <button type="button" data-goto class="ripple rounded-xl px-3 py-1 text-left transition hover:bg-white/[0.06]">
-            <p class="text-[9px] font-bold uppercase tracking-wider text-white/40">Toko Aktif</p>
-            <p id="landingToko" class="mt-0.5 text-[13px] font-extrabold text-white">-</p>
-          </button>
-          <button type="button" data-goto class="ripple rounded-xl px-3 py-1 text-left transition hover:bg-white/[0.06]">
-            <p class="text-[9px] font-bold uppercase tracking-wider text-white/40">Sales</p>
-            <p id="landingSales" class="mt-0.5 text-[13px] font-extrabold text-white">-</p>
-          </button>
-        </div>
-      </section>
+  <div class="mt-4 grid grid-cols-3 gap-2">
+    <div class="rounded-2xl bg-slate-50 p-3">
+      <p class="text-[10px] font-semibold text-slate-500">Bulan Dipilih</p>
+      <p id="sumBulan" class="mt-1 truncate text-[11px] font-bold text-slate-800">-</p>
+    </div>
+    <div class="rounded-2xl bg-slate-50 p-3">
+      <p class="text-[10px] font-semibold text-slate-500">Rata-rata</p>
+      <p id="sumRata" class="mt-1 truncate text-[11px] font-bold text-slate-800">-</p>
+    </div>
+    <div class="rounded-2xl bg-slate-50 p-3">
+      <p class="text-[10px] font-semibold text-slate-500">Tertinggi</p>
+      <p id="sumMax" class="mt-1 truncate text-[11px] font-bold text-slate-800">-</p>
+    </div>
+  </div>
+</section>
 
       <!-- Sapaan + status -->
       <section class="mt-4 rounded-[24px] border border-white bg-white p-4 shadow-[0_14px_34px_-22px_rgba(11,18,32,.4)]">
@@ -722,254 +669,175 @@
         else { ptr.style.transform = ''; ptr.style.opacity = ''; }
       });
 
-                  /* ===================== TOTAL SALES & GRAFIK LANDING ===================== */
-      const BULAN_MULAI = "202601";
-      const BULAN_SELESAI = "202611";
-      const JUMLAH_TAMPIL = 6;
-      const POSISI_TOTAL = 9;   // nomor baris total di spreadsheet (baris 1 = header)
-      const NAMA_BULAN = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-      const NAMA_BULAN_PANJANG = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+                  /* ===================== TOTAL SALES (BALOK) ===================== */
+const BULAN_SELESAI = "202611";
+const JUMLAH_TAMPIL = 6;     // jumlah balok yang tampil sekaligus
+const BARIS_TOTAL = 361;     // nomor baris total di spreadsheet (M361 s/d W361)
+const TINGGI_BALOK = 96;     // tinggi maksimal balok (px)
 
-      const DAFTAR_BULAN = (() => {
-        const out = [];
-        let y = +BULAN_MULAI.slice(0, 4), m = +BULAN_MULAI.slice(4, 6);
-        const yAkhir = +BULAN_SELESAI.slice(0, 4), mAkhir = +BULAN_SELESAI.slice(4, 6);
-        while (y < yAkhir || (y === yAkhir && m <= mAkhir)) {
-          out.push(y + String(m).padStart(2, "0"));
-          if (++m > 12) { m = 1; y++; }
-        }
-        return out;
-      })();
+const NAMA_BULAN = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+const NAMA_BULAN_PANJANG = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 
-      const labelPendek = (kode) => NAMA_BULAN[+kode.slice(4, 6) - 1] + " " + kode.slice(2, 4);
-      const labelPanjang = (kode) => NAMA_BULAN_PANJANG[+kode.slice(4, 6) - 1] + " " + kode.slice(0, 4);
+// 202601 s/d 202611
+const DAFTAR_BULAN = [];
+for (let n = 1; n <= 11; n++) DAFTAR_BULAN.push("2026" + String(n).padStart(2, "0"));
 
-      // Kolom bulan (202601 s.d. 202611) yang berisi angka > 0
-      const adaAngkaBulan = (r) =>
-        !!r && DAFTAR_BULAN.some((b) => SheetData.toNumber(ambil(r, b)) > 0);
+function labelPendek(kode) {
+  const m = Number(kode.slice(4)) - 1;
+  return NAMA_BULAN[m] + " " + kode.slice(2, 4);
+}
 
-      // Mencari baris total dengan tiga cara berurutan
-      function cariBarisTotal(objects) {
-        let t = objects.find((r) =>
-          Object.values(r).some((v) => String(v).trim().toLowerCase().startsWith("total")));
-        if (adaAngkaBulan(t)) return t;
+function labelPanjang(kode) {
+  const m = Number(kode.slice(4)) - 1;
+  return NAMA_BULAN_PANJANG[m] + " 20" + kode.slice(2, 4);
+}
 
-        t = objects[POSISI_TOTAL - 2]; // objects dimulai dari baris 2 spreadsheet
-        if (adaAngkaBulan(t)) return t;
+function rupiahPenuh(n) {
+  return "Rp " + Math.round(n).toLocaleString("id-ID");
+}
 
-        t = objects.find((r) =>
-          !ambil(r, "NO") && !ambil(r, "NAMA PSR") && !ambil(r, "NAMA OUTLET") && adaAngkaBulan(r));
-        return adaAngkaBulan(t) ? t : null;
-      }
+function angka(v) {
+  if (v === undefined || v === null || v === "") return 0;
+  return SheetData.toNumber(v);
+}
 
-      // Data sheet + baris total dipisahkan. Baris total tidak ikut dihitung sebagai outlet.
-      function ambilData() {
-        const d = window.SheetData
-          ? SheetData.get(SUMBER)
-          : { objects: [], header: [], status: 'kosong', updatedAt: null };
-        const total = cariBarisTotal(d.objects);
-        return { ...d, objects: d.objects.filter((r) => r !== total), total };
-      }
+function totalBulan(total, kode) {
+  if (!total) return 0;
+  return angka(total[kode]);
+}
 
-      function totalBulan(total, kode) {
-        return total ? SheetData.toNumber(ambil(total, kode)) : 0;
-      }
+function nilaiBulan(data, kode) {
+  // jika baris total belum terbaca, pakai contoh supaya grafik tetap tampil
+  if (adaTotal(data)) return totalBulan(data.total, kode);
+  return DEMO_VALUES[DAFTAR_BULAN.indexOf(kode)] || 0;
+}
 
-      /* ===================== STATE GRAFIK ===================== */
-      let bulanAktif = null;
-      let awalJendela = Math.max(0, DAFTAR_BULAN.length - JUMLAH_TAMPIL);
-      let aktifPts = [];
-      let idxAktif = -1;
+function adaTotal(data) {
+  return !!data.total && DAFTAR_BULAN.some(k => totalBulan(data.total, k) > 0);
+}
 
-      const maksAwal = () => Math.max(0, DAFTAR_BULAN.length - JUMLAH_TAMPIL);
+// baris total: baris 361 spreadsheet = indeks 359 di objects (objects[0] = baris 2)
+function cariBarisTotal(objects) {
+  const r = objects[BARIS_TOTAL - 2];
+  if (!r) return null;
+  const adaAngka = DAFTAR_BULAN.some(k => angka(r[k]) > 0);
+  return adaAngka ? r : null;
+}
 
-      // Bulan default: bulan terakhir yang total-nya lebih dari 0
-      function pastikanBulanAktif(data) {
-        if (bulanAktif) return bulanAktif;
-        const terakhir = DAFTAR_BULAN[DAFTAR_BULAN.length - 1];
-        if (!data.total) return terakhir;
-        for (let i = DAFTAR_BULAN.length - 1; i >= 0; i--) {
-          if (totalBulan(data.total, DAFTAR_BULAN[i]) > 0) {
-            bulanAktif = DAFTAR_BULAN[i];
-            return bulanAktif;
-          }
-        }
-        bulanAktif = terakhir;
-        return bulanAktif;
-      }
+function ambilData() {
+  const d = SheetData.get(SUMBER);
+  const objects = d.objects || [];
+  const total = cariBarisTotal(objects);
+  // baris total dikeluarkan dari daftar data supaya tidak ikut terhitung
+  const tanpaTotal = objects.filter((_, i) => i !== BARIS_TOTAL - 2);
+  return { ...d, objects: tanpaTotal, total };
+}
 
-      // Geser jendela 6 bulan agar bulan yang dipilih ikut terlihat
-      function pastikanTerlihat(kode) {
-        const i = DAFTAR_BULAN.indexOf(kode);
-        if (i < 0) return;
-        if (i < awalJendela) awalJendela = i;
-        else if (i >= awalJendela + JUMLAH_TAMPIL) awalJendela = i - JUMLAH_TAMPIL + 1;
-        awalJendela = clamp(awalJendela, 0, maksAwal());
-      }
+// state
+let bulanAktif = null;                                   // null = otomatis
+let awalJendela = DAFTAR_BULAN.length - JUMLAH_TAMPIL;   // Jun 26 s/d Nov 26
 
-      function siapkanSeri(data) {
-        const bulanList = DAFTAR_BULAN.slice(awalJendela, awalJendela + JUMLAH_TAMPIL);
-        const demo = !data.total;
-        const values = demo
-          ? DEMO_VALUES.slice(-JUMLAH_TAMPIL).map((v) => v * 1000000)
-          : bulanList.map((b) => totalBulan(data.total, b));
-        return { bulan: bulanList, values, demo };
-      }
+function maksAwal() {
+  return DAFTAR_BULAN.length - JUMLAH_TAMPIL;
+}
 
-      function jalur(p) {
-        if (p.length === 1) return `M${p[0].x},${p[0].y}`;
-        let d = `M${p[0].x.toFixed(1)},${p[0].y.toFixed(1)}`;
-        for (let i = 0; i < p.length - 1; i++) {
-          const p0 = p[i - 1] || p[i], p1 = p[i], p2 = p[i + 1], p3 = p[i + 2] || p2;
-          const c1x = p1.x + (p2.x - p0.x) / 6, c1y = p1.y + (p2.y - p0.y) / 6;
-          const c2x = p2.x - (p3.x - p1.x) / 6, c2y = p2.y - (p3.y - p1.y) / 6;
-          d += ` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
-        }
-        return d;
-      }
+function bulanTampil(data) {
+  if (bulanAktif) return bulanAktif;
+  for (let i = DAFTAR_BULAN.length - 1; i >= 0; i--) {
+    if (totalBulan(data.total, DAFTAR_BULAN[i]) > 0) return DAFTAR_BULAN[i];
+  }
+  return BULAN_SELESAI;
+}
 
-      function gambarGrafik(data = ambilData()) {
-        const s = siapkanSeri(data);
-        const n = s.values.length;
-        const min = Math.min(...s.values), max = Math.max(...s.values);
-        const datar = max === min;
+function pastikanTerlihat(kode) {
+  const idx = DAFTAR_BULAN.indexOf(kode);
+  if (idx < 0) return;
+  if (idx < awalJendela) awalJendela = idx;
+  else if (idx >= awalJendela + JUMLAH_TAMPIL) awalJendela = idx - JUMLAH_TAMPIL + 1;
+  awalJendela = Math.min(Math.max(0, awalJendela), maksAwal());
+}
 
-        aktifPts = s.values.map((v, i) => ({
-          x: n === 1 ? W / 2 : i * W / (n - 1),
-          y: datar ? H / 2 : H - PAD - ((v - min) / (max - min)) * (H - 2 * PAD),
-          v,
-          kode: s.demo ? null : s.bulan[i],
-          l: labelPanjang(s.bulan[i])
-        }));
+function renderStripBulan(bulan) {
+  const wrap = document.getElementById("bulanStrip");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  DAFTAR_BULAN.forEach(kode => {
+    const aktif = kode === bulan;
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.textContent = labelPendek(kode);
+    chip.className = "shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition " +
+      (aktif ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600");
+    chip.addEventListener("click", () => pilihBulan(kode));
+    wrap.appendChild(chip);
+  });
+}
 
-        $('chartLine').setAttribute('d', jalur(aktifPts));
-        $('chartArea').setAttribute('d',
-          `${jalur(aktifPts)} L${aktifPts[n - 1].x.toFixed(1)},${H} L${aktifPts[0].x.toFixed(1)},${H} Z`);
+function gambarGrafik(data) {
+  const bulan = bulanTampil(data);
+  const ada = adaTotal(data);
+  const jendela = DAFTAR_BULAN.slice(awalJendela, awalJendela + JUMLAH_TAMPIL);
+  const nilai = jendela.map(k => nilaiBulan(data, k));
+  const maks = Math.max(1, ...nilai);
 
-        const garis = $('chartLine');
-        garis.style.transition = 'none';
-        garis.style.strokeDashoffset = '1';
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-          garis.style.transition = '';
-          garis.style.strokeDashoffset = '0';
-        }));
+  const wrap = document.getElementById("barWrap");
+  if (wrap) {
+    wrap.innerHTML = "";
+    jendela.forEach((kode, i) => {
+      const v = nilai[i];
+      const tinggi = v > 0 ? Math.max(6, Math.round((v / maks) * TINGGI_BALOK)) : 2;
 
-        setText('chartBadge', s.demo ? 'Contoh' : 'Total sales');
-        renderStripBulan();
-        renderLabelBulan(s.bulan);
+      const kolom = document.createElement("button");
+      kolom.type = "button";
+      kolom.title = labelPanjang(kode) + ": " + (ada ? rupiahPenuh(v) : "contoh");
+      kolom.className = "flex h-full flex-1 flex-col items-center justify-end";
 
-        const prev = $('btnBulanPrev'), next = $('btnBulanNext');
-        prev.disabled = awalJendela <= 0;
-        next.disabled = awalJendela >= maksAwal();
-        prev.classList.toggle('opacity-30', prev.disabled);
-        next.classList.toggle('opacity-30', next.disabled);
+      const balok = document.createElement("div");
+      balok.className = "w-full max-w-[28px] rounded-t-md transition-all duration-500 " +
+        (kode === bulan ? "bg-indigo-600" : "bg-indigo-200");
+      balok.style.height = tinggi + "px";
 
-        sembunyiTip();
-      }
+      kolom.appendChild(balok);
+      kolom.addEventListener("click", () => pilihBulan(kode));
+      wrap.appendChild(kolom);
+    });
+  }
 
-      function tandaiTerpilih() {
-        const dot = $('chartDot');
-        const i = aktifPts.findIndex((p) => p.kode && p.kode === bulanAktif);
-        if (i < 0) { dot.classList.add('hidden'); return; }
-        const p = aktifPts[i];
-        dot.style.left = (p.x / W) * 100 + '%';
-        dot.style.top = (p.y / H) * 100 + '%';
-        dot.classList.remove('hidden');
-      }
+  const labels = document.getElementById("barLabels");
+  if (labels) {
+    labels.innerHTML = "";
+    jendela.forEach(kode => {
+      const d = document.createElement("div");
+      d.className = "flex-1 " + (kode === bulan ? "font-bold text-indigo-600" : "");
+      d.textContent = labelPendek(kode);
+      labels.appendChild(d);
+    });
+  }
 
-      function sembunyiTip() {
-        $('chartTip').classList.add('hidden');
-        idxAktif = -1;
-        tandaiTerpilih();
-      }
+  const badge = document.getElementById("chartBadge");
+  if (badge) badge.textContent = ada ? "Total sales" : "Contoh";
 
-      function tampilTip(i) {
-        const p = aktifPts[i];
-        if (!p) return;
-        const left = (p.x / W) * 100;
-        const top = (p.y / H) * 100;
+  const prev = document.getElementById("btnBulanPrev");
+  const next = document.getElementById("btnBulanNext");
+  if (prev) prev.disabled = awalJendela <= 0;
+  if (next) next.disabled = awalJendela >= maksAwal();
 
-        const dot = $('chartDot');
-        dot.style.left = left + '%';
-        dot.style.top = top + '%';
-        dot.classList.remove('hidden');
+  renderStripBulan(bulan);
+}
 
-        const tip = $('chartTip');
-        tip.style.left = clamp(left, 16, 84) + '%';
-        tip.style.top = top + '%';
-        tip.style.transform = 'translate(-50%, calc(-100% - 10px))';
-        $('tipVal').textContent = rupiahAuto(p.v);
-        $('tipLabel').textContent = p.l;
-        tip.classList.remove('hidden');
-        idxAktif = i;
-      }
+function geserJendela(arah) {
+  awalJendela = Math.min(Math.max(0, awalJendela + arah), maksAwal());
+  if (lastData) gambarGrafik(lastData);
+}
 
-      function indeksDariEvent(e) {
-        const r = $('chartSvg').getBoundingClientRect();
-        const px = clamp((e.clientX - r.left) / r.width, 0, 1);
-        const n = aktifPts.length;
-        return n <= 1 ? 0 : Math.round(px * (n - 1));
-      }
-
-      // Deret chip semua bulan (bisa digeser ke samping)
-      function renderStripBulan() {
-        const wadah = $('bulanStrip');
-        wadah.innerHTML = "";
-        DAFTAR_BULAN.forEach((kode) => {
-          const aktif = kode === bulanAktif;
-          const b = buat('button', 'chip chip-dark ripple shrink-0 rounded-lg px-2.5 py-1 text-[10px] font-extrabold', labelPendek(kode));
-          b.type = 'button';
-          b.dataset.active = aktif ? 'true' : 'false';
-          b.setAttribute('aria-pressed', String(aktif));
-          b.addEventListener('click', () => pilihBulan(kode));
-          wadah.appendChild(b);
-        });
-        const el = wadah.querySelector('[data-active="true"]');
-        if (el) wadah.scrollLeft = el.offsetLeft - wadah.clientWidth / 2 + el.offsetWidth / 2;
-      }
-
-      function renderLabelBulan(daftar) {
-        const wadah = $('chartLabels');
-        if (!wadah) return;
-        wadah.innerHTML = "";
-        daftar.forEach((kode) => {
-          const aktif = kode === bulanAktif;
-          wadah.appendChild(buat('span', aktif ? 'font-extrabold text-white' : '', labelPendek(kode)));
-        });
-      }
-
-      function geserJendela(arah) {
-        awalJendela = clamp(awalJendela + arah, 0, maksAwal());
-        gambarGrafik();
-      }
-
-      function pilihBulan(kode) {
-        if (!kode) return;
-        if (kode !== bulanAktif) haptik(6);
-        bulanAktif = kode;
-        pastikanTerlihat(kode);
-        const data = ambilData();
-        renderRingkasLanding(data);
-        gambarGrafik(data);
-      }
-
-      $('btnBulanPrev').addEventListener('click', () => geserJendela(-1));
-      $('btnBulanNext').addEventListener('click', () => geserJendela(1));
-
-      const hit = $('chartHit');
-      hit.addEventListener('pointermove', (e) => {
-        const i = indeksDariEvent(e);
-        if (i !== idxAktif) tampilTip(i);
-      });
-      hit.addEventListener('pointerdown', (e) => tampilTip(indeksDariEvent(e)));
-      hit.addEventListener('pointerleave', sembunyiTip);
-      hit.addEventListener('pointerup', (e) => {
-        if (e.pointerType === 'touch') setTimeout(sembunyiTip, 1400);
-      });
-      hit.addEventListener('click', (e) => {
-        const p = aktifPts[indeksDariEvent(e)];
-        if (p && p.kode) pilihBulan(p.kode);
-      });
+function pilihBulan(kode) {
+  bulanAktif = kode;
+  pastikanTerlihat(kode);
+  if (lastData) {
+    renderRingkas(lastData);
+    gambarGrafik(lastData);
+  }
+}
 
       /* ===================== PERINGKAT SALES ===================== */
       const RANK_CLS = [
@@ -1084,37 +952,74 @@
       }
 
                   /* ===================== RENDER UTAMA ===================== */
-      // Kartu utama landing: total sales bulan yang dipilih
-      function renderRingkasLanding(data) {
-        const bulan = pastikanBulanAktif(data);
-        setText('pctLabel', 'Total Sales · ' + labelPanjang(bulan));
-        $('pctNum').textContent = data.total ? rupiahAuto(totalBulan(data.total, bulan)) : "-";
-        $('pctSign').textContent = "";
-        setText('pctBadge', data.total ? "Total seluruh outlet" : "Baris total belum terbaca");
-        $('ringBar').style.strokeDashoffset = C;
-        $('ringText').textContent = "—";
-      }
+const RING_C = 2 * Math.PI * 34;
+let lastData = null;
 
-      function render() {
-        const data = ambilData();
-        lastData = data;
-        if (data.updatedAt) lastUpdate = data.updatedAt;
-        tampilStatus(data);
-        tampilWaktu();
-        renderRingkasLanding(data);
-        gambarGrafik(data);
-        setText('dashFooterInfo', "Data spreadsheet · " + jam(data.updatedAt || new Date()));
-      }
+function isiTeks(id, teks) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = teks;
+}
+
+function renderRingkas(data) {
+  const bulan = bulanTampil(data);
+  const ada = adaTotal(data);
+  const nilai = nilaiBulan(data, bulan);
+  const semua = DAFTAR_BULAN.map(k => nilaiBulan(data, k));
+  const maks = Math.max(0, ...semua);
+  const positif = semua.filter(v => v > 0);
+  const rata = positif.length ? positif.reduce((a, b) => a + b, 0) / positif.length : 0;
+  const pct = ada && maks > 0 ? Math.round((nilai / maks) * 100) : 0;
+
+  isiTeks("pctLabel", "Total Sales · " + labelPanjang(bulan));
+  isiTeks("pctNum", ada ? rupiahPenuh(nilai) : "-");
+  isiTeks("pctBadge", ada ? pct + "% dari bulan tertinggi" : "Baris total belum terbaca");
+  isiTeks("ringText", pct + "%");
+
+  const ring = document.getElementById("ringBar");
+  if (ring) ring.style.strokeDashoffset = RING_C * (1 - pct / 100);
+
+  isiTeks("sumBulan", ada ? rupiahPenuh(nilai) : "-");
+  isiTeks("sumRata", ada ? rupiahPenuh(rata) : "-");
+  isiTeks("sumMax", ada ? rupiahPenuh(maks) : "-");
+}
+
+function render() {
+  const data = ambilData();
+  lastData = data;
+  if (typeof tampilStatus === "function") tampilStatus(data);
+  if (typeof tampilWaktu === "function") tampilWaktu();
+  renderRingkas(data);
+  gambarGrafik(data);
+}
 
       /* ===================== MULAI ===================== */
-      if (window.lucide) window.lucide.createIcons();
+const btnPrev = document.getElementById("btnBulanPrev");
+const btnNext = document.getElementById("btnBulanNext");
+if (btnPrev) btnPrev.addEventListener("click", () => geserJendela(-1));
+if (btnNext) btnNext.addEventListener("click", () => geserJendela(1));
 
-      if (window.SheetData) {
-        SheetData.onUpdate(render);
-      } else {
-        tampilStatus({ status: 'error', objects: [], header: [] });
-        gambarGrafik();
-      }
+if (window.lucide) window.lucide.createIcons();
+
+try {
+  render();
+} catch (err) {
+  console.error("Gagal render awal:", err);
+}
+
+if (window.SheetData) {
+  SheetData.onUpdate(() => {
+    try {
+      render();
+    } catch (err) {
+      console.error("Gagal render update:", err);
+    }
+  });
+} else {
+  lastData = { status: "error", header: [], objects: [], total: null };
+  if (typeof tampilStatus === "function") tampilStatus(lastData);
+  renderRingkas(lastData);
+  gambarGrafik(lastData);
+}
     })();
   </script>
   <script src="nav.js"></script>
