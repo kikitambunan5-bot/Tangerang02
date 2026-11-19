@@ -13,7 +13,7 @@
     // Setiap tab/sheet perlu link CSV sendiri.
       sources: {
   utama: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQDjOZV7Bgcr6RzOr7GaRCY8qYU41MhD6HzoXwSrKqgRocTrke9twbcKS8LF3w5H1KwZKqxbmo-DnS9/pub?gid=686242649&single=true&output=csv",
-  tabBaru: "LINK_TAB_BARU_YANG_SUDAH_ADA",
+  tabBaru: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQDjOZV7Bgcr6RzOr7GaRCY8qYU41MhD6HzoXwSrKqgRocTrke9twbcKS8LF3w5H1KwZKqxbmo-DnS9/pub?gid=606396282&single=true&output=csv",
   resumeGt: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQDjOZV7Bgcr6RzOr7GaRCY8qYU41MhD6HzoXwSrKqgRocTrke9twbcKS8LF3w5H1KwZKqxbmo-DnS9/pub?gid=606396282&single=true&output=csv"
 },
     refreshMs: 60000,   // pembaruan otomatis dalam milidetik (60000 = 1 menit). 0 = nonaktif
