@@ -12,7 +12,7 @@
 </head>
 <body class="min-h-screen bg-gradient-to-b from-indigo-50 via-slate-50 to-emerald-50 pb-10 text-slate-800">
 
-  <header class="px-5 pt-6 pb-4">
+  <header class="mx-auto w-full max-w-xl px-5 pt-6 pb-4">
     <a href="index.html" class="inline-flex items-center gap-1 text-sm font-semibold text-indigo-600">
       <span class="text-lg leading-none">‹</span> Kembali
     </a>
@@ -20,7 +20,7 @@
     <p class="mt-1 text-sm text-slate-500">Tim Tangerang · Rizky Daniel</p>
   </header>
 
-  <main class="mx-4">
+  <main class="mx-auto w-full max-w-xl px-4">
     <section class="rounded-3xl bg-white p-5 shadow-sm">
       <div class="flex items-center justify-between gap-3">
         <div>
@@ -140,7 +140,7 @@
       const nama = ambilNamaPsr(d);
       if (nama === null) {
         semuaPsr = [];
-        ol = $("listPsr");
+        const ol = $("listPsr");
         if (ol) ol.innerHTML = "";
         $("jumlahPsr").textContent = "-";
         if (d.status === "ok") {
