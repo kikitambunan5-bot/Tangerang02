@@ -837,7 +837,9 @@ function pilihBulan(kode) {
     renderRingkas(lastData);
     gambarGrafik(lastData);
   }
-  renderTabBaru();
+  // popup hanya terbuka saat Nov 26 dipilih
+  if (kode === BULAN_DETAIL) bukaPopupDetail();
+  else tutupPopupDetail();
 }
       /* ===================== PERINGKAT SALES ===================== */
       const RANK_CLS = [
@@ -1003,8 +1005,8 @@ function render() {
   gambarGrafik(data);
   renderTabBaru();
 }
-      /* ===================== DATA TAB BARU: DETAIL NOVEMBER ===================== */
-const BULAN_DETAIL = "202611";    // panel detail hanya untuk bulan ini
+      /* ===================== DATA TAB BARU: POPUP DETAIL NOVEMBER ===================== */
+const BULAN_DETAIL = "202611";    // popup detail hanya untuk bulan ini
 const SUMBER_DETAIL = "tabBaru";  // nama sumber di sheet.js
 const KUNCI_DETAIL = ["tRetail", "sRetail", "tGrosir", "sGrosir"];
 
@@ -1014,11 +1016,10 @@ function angkaDetail(v) {
   const titik = (s.match(/\./g) || []).length;
   const koma = (s.match(/,/g) || []).length;
   if (titik && koma) {
-    // pemisah yang muncul paling akhir adalah desimal
     if (s.lastIndexOf(",") > s.lastIndexOf(".")) s = s.replace(/\./g, "").replace(",", ".");
     else s = s.replace(/,/g, "");
   } else if (titik + koma > 1) {
-    s = s.replace(/[.,]/g, "");              // lebih dari satu pemisah = pemisah ribuan
+    s = s.replace(/[.,]/g, "");
   } else if (titik + koma === 1) {
     const ekor = s.split(/[.,]/)[1];
     s = ekor.length === 3 ? s.replace(/[.,]/g, "") : s.replace(",", ".");
@@ -1059,67 +1060,93 @@ function hitungDetail(objects) {
   return { ...jumlah, sumber: "Dijumlahkan dari " + baris.length + " PSR" };
 }
 
-function blokDetail(judul, target, sales) {
+function blokPopup(judul, target, sales) {
   const pct = target > 0 ? (sales / target) * 100 : null;
   const teksPct = pct === null ? "-" : pct.toLocaleString("id-ID", { maximumFractionDigits: 1 }) + "%";
   const lebar = pct === null ? 0 : Math.min(100, Math.max(0, pct));
   return (
-    '<div class="rounded-2xl bg-white p-3">' +
-      '<div class="flex items-center justify-between">' +
-        '<p class="text-xs font-bold text-slate-800">' + judul + '</p>' +
-        '<span class="rounded-full bg-indigo-600 px-2.5 py-1 text-[11px] font-bold text-white">' + teksPct + '</span>' +
+    '<div class="rounded-2xl bg-slate-50 p-4">' +
+      '<div class="flex items-center justify-between gap-2">' +
+        '<p class="text-sm font-bold text-slate-800">' + judul + '</p>' +
+        '<span class="rounded-full bg-indigo-600 px-3 py-1 text-xs font-bold text-white">' + teksPct + '</span>' +
       '</div>' +
-      '<div class="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">' +
+      '<div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">' +
         '<div class="h-full rounded-full bg-indigo-600" style="width:' + lebar + '%"></div>' +
       '</div>' +
-      '<div class="mt-3 flex items-baseline justify-between gap-2">' +
-        '<span class="text-[11px] font-semibold text-slate-500">Target</span>' +
-        '<span class="break-words text-right text-xs font-bold text-slate-800">' + rupiahPenuh(target) + '</span>' +
-      '</div>' +
-      '<div class="mt-1 flex items-baseline justify-between gap-2">' +
-        '<span class="text-[11px] font-semibold text-slate-500">Sales</span>' +
-        '<span class="break-words text-right text-xs font-bold text-slate-800">' + rupiahPenuh(sales) + '</span>' +
+      '<div class="mt-4 grid grid-cols-2 gap-3">' +
+        '<div>' +
+          '<p class="text-[11px] font-semibold text-slate-500">Target</p>' +
+          '<p class="mt-1 break-words text-sm font-bold text-slate-800">' + rupiahPenuh(target) + '</p>' +
+        '</div>' +
+        '<div>' +
+          '<p class="text-[11px] font-semibold text-slate-500">Sales</p>' +
+          '<p class="mt-1 break-words text-sm font-bold text-slate-800">' + rupiahPenuh(sales) + '</p>' +
+        '</div>' +
       '</div>' +
     '</div>'
   );
 }
 
-function renderTabBaru() {
-  const kartu = document.getElementById("mainCard");
-  if (!kartu) { console.warn("Elemen #mainCard tidak ditemukan"); return; }
-
-  let panel = document.getElementById("detailBulan");
-  if (!panel) {
-    panel = document.createElement("div");
-    panel.id = "detailBulan";
-    kartu.appendChild(panel);
-  }
-
-  // panel hanya tampil setelah balok / chip Nov 26 ditekan
-  if (bulanAktif !== BULAN_DETAIL) {
-    panel.className = "hidden";
-    panel.innerHTML = "";
-    return;
-  }
-
+function isiPopupDetail() {
+  const isi = document.getElementById("popupIsi");
+  if (!isi) return;
   const d = (window.SheetData && SheetData.get(SUMBER_DETAIL)) || {};
   const detail = hitungDetail(d.objects || []);
-  panel.className = "mt-4 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4";
+
+  let html =
+    '<div class="flex items-start justify-between gap-3">' +
+      '<div>' +
+        '<p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Detail Sales</p>' +
+        '<p class="mt-1 text-lg font-extrabold text-slate-900">' + labelPanjang(BULAN_DETAIL) + '</p>' +
+      '</div>' +
+      '<button id="popupTutup" type="button" aria-label="Tutup" ' +
+        'class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-lg text-slate-600">&times;</button>' +
+    '</div>';
 
   if (!detail) {
-    panel.innerHTML = '<p class="text-xs text-slate-500">' +
+    html += '<p class="mt-5 text-sm text-slate-500">' +
       (d.status === "memuat" ? "Memuat detail..." : "Detail belum terbaca dari sheet.") + '</p>';
-    return;
+  } else {
+    html +=
+      '<div class="mt-5 space-y-3">' +
+        blokPopup("Retail", detail.tRetail, detail.sRetail) +
+        blokPopup("Grosir", detail.tGrosir, detail.sGrosir) +
+      '</div>' +
+      '<p class="mt-4 text-[10px] text-slate-500">' + detail.sumber + '</p>';
   }
 
-  panel.innerHTML =
-    '<p class="text-sm font-bold text-slate-800">Detail ' + labelPanjang(BULAN_DETAIL) + '</p>' +
-    '<div class="mt-3 grid gap-3 sm:grid-cols-2">' +
-      blokDetail("Retail", detail.tRetail, detail.sRetail) +
-      blokDetail("Grosir", detail.tGrosir, detail.sGrosir) +
-    '</div>' +
-    '<p id="detailSumber" class="mt-3 text-[10px] text-slate-500"></p>';
-  document.getElementById("detailSumber").textContent = detail.sumber;
+  isi.innerHTML = html;
+  const tombol = document.getElementById("popupTutup");
+  if (tombol) tombol.addEventListener("click", tutupPopupDetail);
+}
+
+function bukaPopupDetail() {
+  let ov = document.getElementById("popupDetail");
+  if (!ov) {
+    ov = document.createElement("div");
+    ov.id = "popupDetail";
+    ov.className = "fixed inset-0 z-[60] items-center justify-center bg-slate-900/40 p-4";
+    ov.style.display = "none";
+    ov.innerHTML = '<div id="popupIsi" class="w-full max-w-md rounded-3xl bg-white p-5 shadow-xl"></div>';
+    ov.addEventListener("click", e => { if (e.target === ov) tutupPopupDetail(); });
+    document.body.appendChild(ov);
+    document.addEventListener("keydown", e => { if (e.key === "Escape") tutupPopupDetail(); });
+  }
+  isiPopupDetail();
+  ov.style.display = "flex";
+}
+
+function tutupPopupDetail() {
+  const ov = document.getElementById("popupDetail");
+  if (ov) ov.style.display = "none";
+}
+
+// dipanggil dari render(): menghapus panel lama dan memperbarui popup jika sedang terbuka
+function renderTabBaru() {
+  const lama = document.getElementById("detailBulan");
+  if (lama) lama.remove();
+  const ov = document.getElementById("popupDetail");
+  if (ov && ov.style.display === "flex") isiPopupDetail();
 }
       /* ===================== MULAI ===================== */
 const btnPrev = document.getElementById("btnBulanPrev");
