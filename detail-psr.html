@@ -41,18 +41,13 @@
 
     <!-- TARGET DAN SALES NOVEMBER -->
     <section class="rounded-3xl bg-white p-5 shadow-sm">
-      <div class="flex items-start justify-between gap-3">
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Target &amp; Sales
-          </p>
-          <h2 class="mt-1 text-lg font-extrabold text-slate-900">
-            November 2026
-          </h2>
-        </div>
-        <span class="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold text-indigo-600">
-          tabBaru
-        </span>
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Target &amp; Sales
+        </p>
+        <h2 class="mt-1 text-lg font-extrabold text-slate-900">
+          November 2026
+        </h2>
       </div>
 
       <div class="mt-4 grid grid-cols-2 gap-3">
@@ -93,26 +88,17 @@
           <strong id="totalPersen" class="text-sm text-indigo-700">-</strong>
         </div>
       </div>
-
-      <p id="statusNovember" class="mt-3 text-[11px] text-slate-500">
-        Memuat data November...
-      </p>
     </section>
 
     <!-- GRAFIK BULANAN PER PSR -->
     <section class="rounded-3xl bg-white p-5 shadow-sm">
-      <div class="flex items-start justify-between gap-3">
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Total Sales per Bulan
-          </p>
-          <h2 id="bulanTerpilih" class="mt-1 text-lg font-extrabold text-slate-900">
-            November 2026
-          </h2>
-        </div>
-        <span class="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold text-indigo-600">
-          utama
-        </span>
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Total Sales per Bulan
+        </p>
+        <h2 id="bulanTerpilih" class="mt-1 text-lg font-extrabold text-slate-900">
+          November 2026
+        </h2>
       </div>
 
       <p id="salesTerpilih" class="mt-2 break-words text-2xl font-extrabold text-indigo-700">
@@ -135,14 +121,6 @@
 
       <div id="barWrap" class="mt-5 grid h-32 grid-cols-6 items-end gap-2"></div>
       <div id="barLabels" class="mt-2 grid grid-cols-6 gap-2 text-center text-[10px] text-slate-500"></div>
-
-      <p class="mt-4 text-xs text-slate-500">
-        Klik balok atau pilihan <strong>Nov 26</strong> untuk melihat detail Retail dan Grosir PSR ini.
-      </p>
-
-      <p id="statusUtama" class="mt-2 text-[11px] text-slate-500">
-        Memuat data grafik...
-      </p>
     </section>
   </main>
 
@@ -200,10 +178,10 @@
     const $ = id => document.getElementById(id);
     const psr = (new URLSearchParams(window.location.search).get("psr") || "").trim();
 
-    let hasilUtama = null;
-    let hasilNovember = null;
+    let hasilUtama = null;      // { "202601": angka, ... } dari sheet utama
+    let hasilNovember = null;   // { targetRetail, targetGrosir, salesRetail, salesGrosir } dari tabBaru
     let bulanDipilih = null;
-    let awalGrafik = BULAN.length - JUMLAH_BALOK; // awal: Jun–Nov
+    let awalGrafik = BULAN.length - JUMLAH_BALOK;
 
     if (!psr) {
       $("namaPsr").textContent = "PSR belum dipilih";
@@ -286,43 +264,21 @@
       return NAMA_SINGKAT[Number(kode.slice(4)) - 1] + " 26";
     }
 
-    function pesanSumber(d, nama) {
-      if (d.status === "memuat") return "Memuat data " + nama + "...";
-      if (d.status === "kosong") return "Sumber " + nama + " belum ada di sheet.js.";
-      if (d.status === "error") return "Gagal memuat " + nama + ". Periksa link CSV di sheet.js.";
-      return "Data " + nama + " belum tersedia.";
-    }
-
-    function catatanCache(d) {
-      if (d.status === "error") return " · menggunakan data terakhir";
-      if (d.status === "cache") return " · dari cache";
-      return "";
-    }
-
     function barisTotal(teks) {
       return /^(TOTAL|JUMLAH|GRAND TOTAL)(\s|$)/i.test(normal(teks));
     }
 
-    // Grafik: jumlahkan kolom bulan pada baris outlet milik PSR ini.
+    // Sheet utama: jumlahkan kolom bulan (202601 s/d 202610) pada outlet milik PSR ini.
+    // November tidak diambil dari sini.
     function olahUtama(d) {
       const wajib = ["NAMA PSR", "NAMA OUTLET", ...BULAN];
       const c = {};
       wajib.forEach(nama => { c[nama] = kolom(d, nama); });
-
-      const hilang = wajib.filter(nama => !c[nama]);
-      if (hilang.length) {
-        return {
-          nilai: null,
-          pesan: d.status === "memuat"
-            ? pesanSumber(d, "utama")
-            : "Kolom tidak ditemukan di utama: " + hilang.join(", ")
-        };
-      }
+      if (wajib.some(nama => !c[nama])) return null;
 
       const nilai = Object.fromEntries(BULAN.map(k => [k, 0]));
       let pemilikTerakhir = "";
       let jumlahOutlet = 0;
-      let namaDiteruskan = 0;
 
       (d.objects || []).forEach(r => {
         const namaBaris = normal(r[c["NAMA PSR"]]);
@@ -350,69 +306,27 @@
         if (pemilikTerakhir !== kunciPsr || !adaDataBulan) return;
 
         jumlahOutlet++;
-        if (!namaBaris) namaDiteruskan++;
-
         BULAN.forEach(k => {
           nilai[k] += angkaUang(r[c[k]]);
         });
       });
 
-      if (!jumlahOutlet) {
-        return {
-          nilai: null,
-          pesan: d.status === "error"
-            ? pesanSumber(d, "utama")
-            : "Tidak ditemukan baris outlet untuk PSR ini di sheet utama. Periksa kolom NAMA PSR."
-        };
-      }
-
-      return {
-        nilai,
-        pesan: "Dihitung dari " + jumlahOutlet + " baris outlet di utama" +
-          (namaDiteruskan
-            ? " (" + namaDiteruskan + " baris mengikuti nama PSR di atasnya)"
-            : "") +
-          catatanCache(d) + "."
-      };
+      return jumlahOutlet ? nilai : null;
     }
 
-    // Target/sales: hanya ambil baris tabBaru dengan NAMA PSR yang cocok.
+    // Sheet tabBaru: target dan sales November milik PSR ini.
     function olahNovember(d) {
-      const wajib = [
-        "NAMA PSR",
-        "TARGET RETAIL",
-        "TARGET GROSIR",
-        "SALES RETAIL",
-        "SALES GROSIR"
-      ];
-
+      const wajib = ["NAMA PSR", "TARGET RETAIL", "TARGET GROSIR", "SALES RETAIL", "SALES GROSIR"];
       const c = {};
       wajib.forEach(nama => { c[nama] = kolom(d, nama); });
-
-      const hilang = wajib.filter(nama => !c[nama]);
-      if (hilang.length) {
-        return {
-          nilai: null,
-          pesan: d.status === "memuat"
-            ? pesanSumber(d, "tabBaru")
-            : "Kolom tidak ditemukan di tabBaru: " + hilang.join(", ")
-        };
-      }
+      if (wajib.some(nama => !c[nama])) return null;
 
       const baris = (d.objects || []).filter(
         r => normal(r[c["NAMA PSR"]]) === kunciPsr
       );
+      if (!baris.length) return null;
 
-      if (!baris.length) {
-        return {
-          nilai: null,
-          pesan: d.status === "error"
-            ? pesanSumber(d, "tabBaru")
-            : "Nama PSR ini belum ditemukan di tabBaru. Periksa penulisan NAMA PSR."
-        };
-      }
-
-      const nilai = {
+      const hasil = {
         targetRetail: 0,
         targetGrosir: 0,
         salesRetail: 0,
@@ -420,56 +334,55 @@
       };
 
       baris.forEach(r => {
-        nilai.targetRetail += angkaUang(r[c["TARGET RETAIL"]]);
-        nilai.targetGrosir += angkaUang(r[c["TARGET GROSIR"]]);
-        nilai.salesRetail += angkaUang(r[c["SALES RETAIL"]]);
-        nilai.salesGrosir += angkaUang(r[c["SALES GROSIR"]]);
+        hasil.targetRetail += angkaUang(r[c["TARGET RETAIL"]]);
+        hasil.targetGrosir += angkaUang(r[c["TARGET GROSIR"]]);
+        hasil.salesRetail += angkaUang(r[c["SALES RETAIL"]]);
+        hasil.salesGrosir += angkaUang(r[c["SALES GROSIR"]]);
       });
 
-      return {
-        nilai,
-        pesan: "Sumber: tabBaru · " + baris.length +
-          " baris untuk PSR ini" + catatanCache(d) + "."
-      };
+      return hasil;
+    }
+
+    // November memakai tabBaru (Retail + Grosir), bulan lain memakai utama.
+    function nilaiBulan(kode) {
+      if (kode === BULAN_NOVEMBER) {
+        return hasilNovember
+          ? hasilNovember.salesRetail + hasilNovember.salesGrosir
+          : 0;
+      }
+      return hasilUtama ? (hasilUtama[kode] || 0) : 0;
+    }
+
+    function adaData() {
+      return !!hasilUtama || !!hasilNovember;
     }
 
     function isi(id, teks) {
-      $(id).textContent = teks;
+      const el = $(id);
+      if (el) el.textContent = teks;
     }
 
     function tampilRingkasanNovember() {
-      const v = hasilNovember && hasilNovember.nilai;
+      const v = hasilNovember;
 
       isi("targetRetail", v ? rupiah(v.targetRetail) : "-");
       isi("salesRetail", v ? rupiah(v.salesRetail) : "-");
       isi("targetGrosir", v ? rupiah(v.targetGrosir) : "-");
       isi("salesGrosir", v ? rupiah(v.salesGrosir) : "-");
 
-      isi("totalTarget",
-        v ? rupiah(v.targetRetail + v.targetGrosir) : "-"
-      );
-      isi("totalSales",
-        v ? rupiah(v.salesRetail + v.salesGrosir) : "-"
-      );
-      isi("totalPersen",
-        v ? persen(
-          v.targetRetail + v.targetGrosir,
-          v.salesRetail + v.salesGrosir
-        ) : "-"
-      );
-
-      isi("statusNovember",
-        hasilNovember ? hasilNovember.pesan : "Memuat data November..."
+      isi("totalTarget", v ? rupiah(v.targetRetail + v.targetGrosir) : "-");
+      isi("totalSales", v ? rupiah(v.salesRetail + v.salesGrosir) : "-");
+      isi("totalPersen", v
+        ? persen(v.targetRetail + v.targetGrosir, v.salesRetail + v.salesGrosir)
+        : "-"
       );
     }
 
     function bulanAktif() {
       if (bulanDipilih) return bulanDipilih;
 
-      if (hasilUtama && hasilUtama.nilai) {
-        for (let i = BULAN.length - 1; i >= 0; i--) {
-          if (hasilUtama.nilai[BULAN[i]] > 0) return BULAN[i];
-        }
+      for (let i = BULAN.length - 1; i >= 0; i--) {
+        if (nilaiBulan(BULAN[i]) > 0) return BULAN[i];
       }
 
       return BULAN_NOVEMBER;
@@ -481,16 +394,10 @@
 
     function gambarGrafik() {
       const kodeAktif = bulanAktif();
-      const adaData = !!(hasilUtama && hasilUtama.nilai);
-      const angkaBulan = adaData ? hasilUtama.nilai : {};
+      const ada = adaData();
 
       isi("bulanTerpilih", labelBulan(kodeAktif));
-      isi("salesTerpilih",
-        adaData ? rupiah(angkaBulan[kodeAktif]) : "-"
-      );
-      isi("statusUtama",
-        hasilUtama ? hasilUtama.pesan : "Memuat data grafik..."
-      );
+      isi("salesTerpilih", ada ? rupiah(nilaiBulan(kodeAktif)) : "-");
 
       const strip = $("bulanStrip");
       const posisiScroll = strip.scrollLeft;
@@ -515,10 +422,7 @@
       strip.scrollLeft = posisiScroll;
 
       const tampil = BULAN.slice(awalGrafik, awalGrafik + JUMLAH_BALOK);
-      const terbesar = Math.max(
-        1,
-        ...tampil.map(kode => angkaBulan[kode] || 0)
-      );
+      const terbesar = Math.max(1, ...tampil.map(nilaiBulan));
 
       const wrap = $("barWrap");
       const labels = $("barLabels");
@@ -526,27 +430,20 @@
       labels.replaceChildren();
 
       tampil.forEach(kode => {
-        const n = angkaBulan[kode] || 0;
-        const tinggi = n > 0
-          ? Math.max(6, Math.round(n / terbesar * 100))
-          : 2;
+        const n = nilaiBulan(kode);
+        const tinggi = n > 0 ? Math.max(6, Math.round(n / terbesar * 100)) : 2;
+        const teksNilai = ada ? rupiah(n) : "data belum tersedia";
 
         const tombol = document.createElement("button");
         tombol.type = "button";
         tombol.className = "flex h-full min-w-0 flex-col items-center justify-end";
-        tombol.title = labelBulan(kode) + ": " +
-          (adaData ? rupiah(n) : "data belum tersedia");
-        tombol.setAttribute(
-          "aria-label",
-          "Pilih " + labelBulan(kode) + ", " +
-          (adaData ? rupiah(n) : "data belum tersedia")
-        );
+        tombol.title = labelBulan(kode) + ": " + teksNilai;
+        tombol.setAttribute("aria-label", "Pilih " + labelBulan(kode) + ", " + teksNilai);
 
         const balok = document.createElement("span");
         balok.className =
           "w-full max-w-[30px] rounded-t-lg transition-all duration-300 " +
           (kode === kodeAktif ? "bg-indigo-600" : "bg-indigo-200");
-
         balok.style.height = n > 0 ? tinggi + "%" : "2px";
 
         tombol.appendChild(balok);
@@ -555,9 +452,7 @@
 
         const label = document.createElement("span");
         label.textContent = labelSingkat(kode);
-        label.className = kode === kodeAktif
-          ? "font-bold text-indigo-600"
-          : "";
+        label.className = kode === kodeAktif ? "font-bold text-indigo-600" : "";
         labels.appendChild(label);
       });
 
@@ -572,7 +467,6 @@
       const kartu = document.createElement("section");
       kartu.className = "rounded-2xl bg-slate-50 p-4";
 
-      // Judul selalu "Retail" atau "Grosir"; angka sudah dikonversi ke Number.
       kartu.innerHTML =
         '<div class="flex items-center justify-between gap-2">' +
           '<h3 class="text-sm font-bold text-slate-800">' + judul + '</h3>' +
@@ -601,29 +495,17 @@
       const isiPopup = $("popupIsi");
       isiPopup.replaceChildren();
 
-      const v = hasilNovember && hasilNovember.nilai;
-
+      const v = hasilNovember;
       if (!v) {
         const pesan = document.createElement("p");
         pesan.className = "text-sm text-slate-500";
-        pesan.textContent = hasilNovember
-          ? hasilNovember.pesan
-          : "Memuat detail PSR...";
+        pesan.textContent = "Data PSR belum tersedia.";
         isiPopup.appendChild(pesan);
         return;
       }
 
-      isiPopup.appendChild(
-        kartuPopup("Retail", v.targetRetail, v.salesRetail)
-      );
-      isiPopup.appendChild(
-        kartuPopup("Grosir", v.targetGrosir, v.salesGrosir)
-      );
-
-      const sumber = document.createElement("p");
-      sumber.className = "text-[11px] text-slate-500";
-      sumber.textContent = hasilNovember.pesan;
-      isiPopup.appendChild(sumber);
+      isiPopup.appendChild(kartuPopup("Retail", v.targetRetail, v.salesRetail));
+      isiPopup.appendChild(kartuPopup("Grosir", v.targetGrosir, v.salesGrosir));
     }
 
     function bukaPopup() {
@@ -642,9 +524,7 @@
       bulanDipilih = kode;
 
       // Geser jendela agar bulan yang dipilih ikut tampil dalam grafik.
-      awalGrafik = batas(
-        BULAN.indexOf(kode) - Math.floor(JUMLAH_BALOK / 2)
-      );
+      awalGrafik = batas(BULAN.indexOf(kode) - Math.floor(JUMLAH_BALOK / 2));
 
       gambarGrafik();
 
@@ -662,14 +542,12 @@
 
       tampilRingkasanNovember();
 
-      // Jika data terbaru hanya sampai awal tahun, tampilkan jendelanya.
       if (!bulanDipilih && BULAN.indexOf(bulanAktif()) < awalGrafik) {
         awalGrafik = 0;
       }
 
       gambarGrafik();
 
-      // Jika popup sedang terbuka, angka di dalamnya ikut diperbarui.
       if (!$("popupNov").classList.contains("hidden")) gambarPopup();
     }
 
