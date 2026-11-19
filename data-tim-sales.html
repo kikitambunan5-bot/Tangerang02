@@ -100,35 +100,53 @@
     }
 
     function tampilDaftar() {
-      const kata = ($("cariPsr").value || "").trim().toLowerCase();
-      const ol = $("listPsr");
-      ol.innerHTML = "";
+  const kata = ($("cariPsr").value || "").trim().toLowerCase();
+  const ol = $("listPsr");
+  ol.innerHTML = "";
 
-      const tampil = semuaPsr.filter(n => n.toLowerCase().includes(kata));
-      tampil.forEach(nama => {
-        const no = semuaPsr.indexOf(nama) + 1;
+  const tampil = semuaPsr.filter(nama =>
+    nama.toLowerCase().includes(kata)
+  );
 
-        const li = document.createElement("li");
-        li.className = "flex items-center gap-3 py-3";
+  tampil.forEach(nama => {
+    const li = document.createElement("li");
 
-        const nomor = document.createElement("span");
-        nomor.className = "flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-xs font-bold text-indigo-600";
-        nomor.textContent = no;
+    const tautan = document.createElement("a");
+    tautan.href = "detail-psr.html?psr=" + encodeURIComponent(nama);
+    tautan.className =
+      "flex items-center gap-3 rounded-xl px-2 py-3 transition " +
+      "hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-300";
+    tautan.setAttribute("aria-label", "Buka detail " + nama);
 
-        const teks = document.createElement("span");
-        teks.className = "break-words text-sm font-semibold text-slate-800";
-        teks.textContent = nama;
+    const nomor = document.createElement("span");
+    nomor.className =
+      "flex h-7 w-7 shrink-0 items-center justify-center " +
+      "rounded-full bg-indigo-50 text-xs font-bold text-indigo-600";
+    nomor.textContent = semuaPsr.indexOf(nama) + 1;
 
-        li.append(nomor, teks);
-        ol.appendChild(li);
-      });
+    const teks = document.createElement("span");
+    teks.className = "min-w-0 flex-1 break-words text-sm font-semibold text-slate-800";
+    teks.textContent = nama;
 
-      if (tampil.length === 0) {
-        tampilPesan(semuaPsr.length ? "Tidak ada PSR yang cocok." : "Belum ada data PSR.");
-      } else {
-        sembunyikanPesan();
-      }
-    }
+    const panah = document.createElement("span");
+    panah.className = "shrink-0 text-xl text-indigo-500";
+    panah.textContent = "›";
+
+    tautan.append(nomor, teks, panah);
+    li.appendChild(tautan);
+    ol.appendChild(li);
+  });
+
+  if (tampil.length === 0) {
+    tampilPesan(
+      semuaPsr.length
+        ? "Tidak ada PSR yang cocok."
+        : "Belum ada data PSR."
+    );
+  } else {
+    sembunyikanPesan();
+  }
+}
 
     function render() {
       const d = window.SheetData
