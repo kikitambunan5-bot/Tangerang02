@@ -100,7 +100,7 @@
             <p id="tQty" class="mt-1 text-base font-bold">-</p>
           </div>
           <div class="rounded-2xl bg-slate-50 p-4">
-            <p class="text-xs text-slate-500">Estimasi sales / bln</p>
+            <p class="text-xs text-slate-500">Estimasi sales / bln (Rp)</p>
             <p id="tEstimasi" class="mt-1 text-base font-bold">-</p>
           </div>
           <div class="rounded-2xl bg-slate-50 p-4">
@@ -116,9 +116,16 @@
 
       <div class="mt-4 rounded-[28px] bg-white p-5 shadow">
         <p class="text-sm font-bold">Detail Produk</p>
-        <p class="text-xs text-slate-500">Urut dari Qty ST / bulan UB tertinggi</p>
-        <ul id="listProduk" class="mt-4 space-y-3"></ul>
+        <p class="text-xs text-slate-500">Urut dari Qty ST / bulan UB tertinggi, 15 SKU per halaman</p>
+
+        <ul id="listProduk" class="mt-4 space-y-2"></ul>
         <p id="listProdukKosong" class="hidden py-8 text-center text-sm text-slate-500">Belum ada produk untuk outlet ini pada periode November 2026.</p>
+
+        <div id="pagerProduk" class="mt-4 hidden flex items-center justify-between gap-3">
+          <button id="produkPrev" class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold disabled:opacity-40">‹ Sebelumnya</button>
+          <p id="produkInfo" class="text-center text-xs text-slate-500"></p>
+          <button id="produkNext" class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold disabled:opacity-40">Berikutnya ›</button>
+        </div>
       </div>
     </div>
 
@@ -131,12 +138,13 @@
     const KUNCI_INSENTIF = "insentifSc";
     const PERIODE = "202611";
     const LABEL_PERIODE = "November 2026";
+    const PER_HALAMAN = 15;
+
     const params = new URLSearchParams(location.search);
     const psrPilih = (params.get("psr") || "").trim();
     const outletPilih = (params.get("outlet") || "").trim();
 
     // Posisi kolom di tab insentifSc (mulai dari 0 = kolom A)
-    // Jika urutan kolom di spreadsheet berubah, ubah angka di sini
     const K = {
       psr: 1,        // B  NAMA PSR
       kode: 2,       // C  kode outlet
@@ -144,7 +152,7 @@
       produk: 5,     // F  produk
       periode: 6,    // G  periode
       qty: 7,        // H  Qty ST / bulan UB
-      estimasi: 8,   // I  Estimasi sales / bln
+      estimasi: 8,   // I  Estimasi sales / bln (Rp)
       realUb: 9,     // J  Realisasi UB
       realSales: 10  // K  Realisasi sales
     };
@@ -158,6 +166,8 @@
     };
 
     let semuaNama = [];
+    let outletDetail = null;
+    let halamanProduk = 1;
 
     function siap() {
       return typeof SheetData !== "undefined" && typeof SheetData.get === "function";
@@ -228,7 +238,9 @@
       return hasil;
     }
 
-    // Mengelompokkan data periode 202611: PSR > outlet > produk
+    // Mengelompokkan data periode 202611: PSR > outlet > produk.
+    // Nilai produk diambil langsung dari baris periode 202611 (tidak dijumlahkan).
+    // Jika ada baris ganda untuk produk yang sama, yang dipakai baris pertama.
     function olahInsentif(d) {
       const peta = new Map();
       let psrAktif = "";
@@ -258,12 +270,6 @@
         if (periode !== PERIODE) continue;
 
         const produk = r[K.produk] || "(tanpa nama produk)";
-        const isi = {
-          qty: toNum(r[K.qty]),
-          estimasi: toNum(r[K.estimasi]),
-          realUb: toNum(r[K.realUb]),
-          realSales: toNum(r[K.realSales])
-        };
 
         const kPsr = normal(psrAktif);
         if (!peta.has(kPsr)) peta.set(kPsr, { nama: psrAktif, outlet: new Map() });
@@ -274,18 +280,20 @@
         const outletObj = psrObj.outlet.get(kOutlet);
 
         const kProduk = normal(produk);
-        if (!outletObj.produk.has(kProduk)) {
-          outletObj.produk.set(kProduk, { nama: produk, qty: 0, estimasi: 0, realUb: 0, realSales: 0 });
-        }
-        const p = outletObj.produk.get(kProduk);
-        p.qty += isi.qty;
-        p.estimasi += isi.estimasi;
-        p.realUb += isi.realUb;
-        p.realSales += isi.realSales;
+        if (outletObj.produk.has(kProduk)) continue; // baris ganda: pakai yang pertama
+
+        outletObj.produk.set(kProduk, {
+          nama: produk,
+          qty: toNum(r[K.qty]),
+          estimasi: toNum(r[K.estimasi]),
+          realUb: toNum(r[K.realUb]),
+          realSales: toNum(r[K.realSales])
+        });
       }
       return peta;
     }
 
+    // Ringkasan outlet: total dari nilai produk yang sudah terpilih
     function ringkasOutlet(o) {
       const t = { qty: 0, estimasi: 0, realUb: 0, realSales: 0 };
       o.produk.forEach(p => {
@@ -354,57 +362,74 @@
       el("listOutletKosong").classList.toggle("hidden", daftar.length > 0);
     }
 
+    // Menampilkan 15 SKU per halaman, dengan detail di sebelah kanan setiap produk
+    function renderProduk() {
+      const produk = outletDetail
+        ? [...outletDetail.produk.values()].sort((a, b) =>
+            b.qty - a.qty || b.realSales - a.realSales || a.nama.localeCompare(b.nama, "id"))
+        : [];
+
+      const total = produk.length;
+      const jumlahHal = Math.max(1, Math.ceil(total / PER_HALAMAN));
+      halamanProduk = Math.min(Math.max(1, halamanProduk), jumlahHal);
+
+      const mulai = (halamanProduk - 1) * PER_HALAMAN;
+      const potong = produk.slice(mulai, mulai + PER_HALAMAN);
+
+      el("listProduk").innerHTML = potong.map((p, i) => `
+        <li class="flex items-center gap-3 rounded-2xl border border-slate-100 p-3">
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">${mulai + i + 1}</span>
+          <p class="min-w-0 flex-1 text-sm font-bold leading-snug break-words">${escHtml(p.nama)}</p>
+          <div class="grid w-[55%] shrink-0 grid-cols-2 gap-x-3 gap-y-2">
+            <div>
+              <p class="text-[10px] text-slate-500">Qty ST / bln UB</p>
+              <p class="text-xs font-bold">${num(p.qty)}</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-500">Estimasi sales / bln</p>
+              <p class="text-xs font-bold">${rp(p.estimasi)}</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-500">Realisasi UB</p>
+              <p class="text-xs font-bold">${num(p.realUb)}</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-500">Realisasi sales</p>
+              <p class="text-xs font-bold">${rp(p.realSales)}</p>
+            </div>
+          </div>
+        </li>`).join("");
+
+      el("listProdukKosong").classList.toggle("hidden", total > 0);
+      el("pagerProduk").classList.toggle("hidden", total === 0);
+      el("produkInfo").textContent = total
+        ? `Halaman ${halamanProduk} dari ${jumlahHal} · SKU ${mulai + 1}–${mulai + potong.length} dari ${total}`
+        : "";
+      el("produkPrev").disabled = halamanProduk <= 1;
+      el("produkNext").disabled = halamanProduk >= jumlahHal;
+    }
+
     function renderDetail(outletObj) {
       el("judulUtama").textContent = outletObj ? outletObj.nama : outletPilih;
       el("subJudul").textContent = psrPilih + " · " + LABEL_PERIODE;
       el("btnKembali").href = "monitoring-insentif-sc.html?psr=" + encodeURIComponent(psrPilih);
+
+      outletDetail = outletObj || null;
 
       if (!outletObj) {
         el("tQty").textContent = "-";
         el("tEstimasi").textContent = "-";
         el("tRealUb").textContent = "-";
         el("tRealSales").textContent = "-";
-        el("listProduk").innerHTML = "";
-        el("listProdukKosong").classList.remove("hidden");
-        return;
+      } else {
+        const t = ringkasOutlet(outletObj);
+        el("tQty").textContent = num(t.qty);
+        el("tEstimasi").textContent = rp(t.estimasi);
+        el("tRealUb").textContent = num(t.realUb);
+        el("tRealSales").textContent = rp(t.realSales);
       }
 
-      const t = ringkasOutlet(outletObj);
-      el("tQty").textContent = num(t.qty);
-      el("tEstimasi").textContent = rp(t.estimasi);
-      el("tRealUb").textContent = num(t.realUb);
-      el("tRealSales").textContent = rp(t.realSales);
-
-      const produk = [...outletObj.produk.values()].sort((a, b) =>
-        b.qty - a.qty || b.realSales - a.realSales || a.nama.localeCompare(b.nama, "id")
-      );
-
-      el("listProduk").innerHTML = produk.map((p, i) => `
-        <li class="rounded-2xl border border-slate-100 p-4">
-          <div class="flex items-start gap-3">
-            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">${i + 1}</span>
-            <p class="text-sm font-bold leading-snug">${escHtml(p.nama)}</p>
-          </div>
-          <div class="mt-3 grid grid-cols-2 gap-2">
-            <div class="rounded-xl bg-slate-50 p-3">
-              <p class="text-[11px] text-slate-500">Qty ST / bulan UB</p>
-              <p class="mt-1 text-sm font-bold">${num(p.qty)}</p>
-            </div>
-            <div class="rounded-xl bg-slate-50 p-3">
-              <p class="text-[11px] text-slate-500">Estimasi sales / bln</p>
-              <p class="mt-1 text-sm font-bold">${rp(p.estimasi)}</p>
-            </div>
-            <div class="rounded-xl bg-slate-50 p-3">
-              <p class="text-[11px] text-slate-500">Realisasi UB</p>
-              <p class="mt-1 text-sm font-bold">${num(p.realUb)}</p>
-            </div>
-            <div class="rounded-xl bg-slate-50 p-3">
-              <p class="text-[11px] text-slate-500">Realisasi sales</p>
-              <p class="mt-1 text-sm font-bold">${rp(p.realSales)}</p>
-            </div>
-          </div>
-        </li>`).join("");
-      el("listProdukKosong").classList.toggle("hidden", produk.length > 0);
+      renderProduk();
     }
 
     function renderInsentif() {
@@ -451,6 +476,20 @@
     }
 
     el("cariPsr").addEventListener("input", tampilDaftarPsr);
+
+    el("produkPrev").addEventListener("click", () => {
+      if (halamanProduk > 1) {
+        halamanProduk--;
+        renderProduk();
+        el("viewDetail").scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+    el("produkNext").addEventListener("click", () => {
+      halamanProduk++;
+      renderProduk();
+      el("viewDetail").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
     if (siap() && typeof SheetData.onUpdate === "function") SheetData.onUpdate(render);
     render();
     if (window.lucide) lucide.createIcons();
