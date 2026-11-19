@@ -718,10 +718,17 @@ function adaTotal(data) {
 
 // baris total: baris 361 spreadsheet = indeks 359 di objects (objects[0] = baris 2)
 function cariBarisTotal(objects) {
-  const r = objects[BARIS_TOTAL - 2];
-  if (!r) return null;
-  const adaAngka = DAFTAR_BULAN.some(k => angka(r[k]) > 0);
-  return adaAngka ? r : null;
+  const adaAngka = r => !!r && DAFTAR_BULAN.some(k => angka(r[k]) > 0);
+
+  // 1) coba posisi baris 361 (indeks 359)
+  const posisi = objects[BARIS_TOTAL - 2];
+  if (adaAngka(posisi)) return posisi;
+
+  // 2) cadangan: baris tanpa nama PSR dan nama outlet, tapi punya angka bulan (ambil yang paling bawah)
+  const kosongNama = r =>
+    !String(r["NAMA PSR"] || "").trim() && !String(r["NAMA OUTLET"] || "").trim();
+  const kandidat = objects.filter(r => kosongNama(r) && adaAngka(r));
+  return kandidat.length ? kandidat[kandidat.length - 1] : null;
 }
 
 function ambilData() {
@@ -729,7 +736,7 @@ function ambilData() {
   const objects = d.objects || [];
   const total = cariBarisTotal(objects);
   // baris total dikeluarkan dari daftar data supaya tidak ikut terhitung
-  const tanpaTotal = objects.filter((_, i) => i !== BARIS_TOTAL - 2);
+  const tanpaTotal = objects.filter(r => r !== total);
   return { ...d, objects: tanpaTotal, total };
 }
 
@@ -952,8 +959,6 @@ function pilihBulan(kode) {
       }
 
                   /* ===================== RENDER UTAMA ===================== */
-const RING_C = 2 * Math.PI * 34;
-let lastData = null;
 
 function isiTeks(id, teks) {
   const el = document.getElementById(id);
