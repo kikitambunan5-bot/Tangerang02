@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Analisis Outlet · Tim Tangerang</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body { font-family: "Plus Jakarta Sans", sans-serif; }
+  </style>
+</head>
+
+<body class="min-h-screen bg-gradient-to-b from-indigo-50 via-slate-50 to-emerald-50 text-slate-800">
+
+  <header class="mx-auto w-full max-w-xl px-5 pb-4 pt-6">
+    <div class="flex items-center justify-between gap-3">
+      <a id="linkKembali" href="data-tim-sales.html" class="text-sm font-semibold text-indigo-600">
+        ‹ Kembali
+      </a>
+      <a href="index.html" class="text-xs font-semibold text-slate-500">
+        Dashboard
+      </a>
+    </div>
+
+    <p class="mt-5 text-xs font-bold uppercase tracking-wide text-indigo-600">
+      Analisis Outlet
+    </p>
+    <h1 id="namaOutlet" class="mt-1 break-words text-2xl font-extrabold text-slate-900">
+      Memuat outlet...
+    </h1>
+    <p id="namaPsr" class="mt-1 break-words text-sm text-slate-500"></p>
+  </header>
+
+  <main class="mx-auto w-full max-w-xl space-y-4 px-4 pb-10">
+
+    <div id="pesan" class="hidden rounded-2xl p-4 text-sm"></div>
+
+    <!-- GRAFIK BULANAN OUTLET -->
+    <section class="rounded-3xl bg-white p-5 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        Total Sales per Bulan
+      </p>
+      <h2 id="bulanTerpilih" class="mt-1 text-lg font-extrabold text-slate-900">-</h2>
+      <p id="salesTerpilih" class="mt-2 break-words text-2xl font-extrabold text-indigo-700">-</p>
+      <p id="perubahan" class="mt-2 break-words text-xs text-slate-500"></p>
+
+      <div class="mt-5 flex items-center gap-2">
+        <button id="bulanPrev" type="button" aria-label="Bulan sebelumnya"
+          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-600 disabled:opacity-30">
+          ‹
+        </button>
+        <div id="bulanStrip" class="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1"></div>
+        <button id="bulanNext" type="button" aria-label="Bulan berikutnya"
+          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-600 disabled:opacity-30">
+          ›
+        </button>
+      </div>
+
+      <div id="barWrap" class="mt-5 grid h-40 grid-cols-6 items-end gap-2"></div>
+      <div id="barLabels" class="mt-2 grid grid-cols-6 gap-2 text-center text-[10px] text-slate-500"></div>
+    </section>
+
+    <!-- RINGKASAN -->
+    <section class="rounded-3xl bg-white p-5 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        Ringkasan 2026
+      </p>
+      <div class="mt-4 grid grid-cols-2 gap-3">
+        <div class="rounded-2xl bg-slate-50 p-3">
+          <p class="text-[11px] font-semibold text-slate-500">Tertinggi</p>
+          <p id="rkTertinggi" class="mt-1 break-words text-xs font-bold text-slate-800">-</p>
+        </div>
+        <div class="rounded-2xl bg-slate-50 p-3">
+          <p class="text-[11px] font-semibold text-slate-500">Terendah</p>
+          <p id="rkTerendah" class="mt-1 break-words text-xs font-bold text-slate-800">-</p>
+        </div>
+        <div class="rounded-2xl bg-slate-50 p-3">
+          <p class="text-[11px] font-semibold text-slate-500">Rata-rata</p>
+          <p id="rkRata" class="mt-1 break-words text-xs font-bold text-slate-800">-</p>
+        </div>
+        <div class="rounded-2xl bg-slate-50 p-3">
+          <p class="text-[11px] font-semibold text-slate-500">Total</p>
+          <p id="rkTotal" class="mt-1 break-words text-xs font-bold text-slate-800">-</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIWAYAT BULANAN -->
+    <section class="rounded-3xl bg-white p-5 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        Riwayat Bulanan
+      </p>
+      <ol id="riwayat" class="mt-3 divide-y divide-slate-100"></ol>
+    </section>
+  </main>
+
+  <script src="sheet.js"></script>
+
+  <script>
+  (function () {
+    "use strict";
+
+    const BULAN = Array.from(
+      { length: 11 },
+      (_, i) => "2026" + String(i + 1).padStart(2, "0")
+    );
+
+    const NAMA_BULAN = [
+      "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+      "Juli", "Agustus", "September", "Oktober", "November"
+    ];
+
+    const NAMA_SINGKAT = [
+      "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+      "Jul", "Agu", "Sep", "Okt", "Nov"
+    ];
+
+    const JUMLAH_BALOK = 6;
+    const BULAN_AWAL = BULAN[BULAN.length - 1];
+
+    const $ = id => document.getElementById(id);
+    const params = new URLSearchParams(window.location.search);
+    const psr = (params.get("psr") || "").trim();
+    const outlet = (params.get("outlet") || "").trim();
+
+    let nilai = null;                          // { "202601": angka, ... }
+    let terpilih = BULAN_AWAL;
+    let awal = BULAN.length - JUMLAH_BALOK;
+
+    function tampilPesan(teks, jenis) {
+      const warna = {
+        merah: "bg-rose-50 text-rose-700",
+        kuning: "bg-amber-50 text-amber-700",
+        netral: "bg-slate-100 text-slate-600"
+      };
+      const el = $("pesan");
+      el.textContent = teks;
+      el.className = "rounded-2xl p-4 text-sm " + (warna[jenis] || warna.netral);
+    }
+
+    function sembunyikanPesan() {
+      $("pesan").className = "hidden";
+    }
+
+    if (!psr || !outlet) {
+      $("namaOutlet").textContent = "Outlet belum dipilih";
+      tampilPesan("Buka halaman ini dari daftar outlet di detail PSR.", "netral");
+      return;
+    }
+
+    $("namaOutlet").textContent = outlet;
+    $("namaPsr").textContent = "PSR: " + psr;
+    $("linkKembali").href = "detail-psr.html?psr=" + encodeURIComponent(psr);
+    document.title = outlet + " · Analisis Outlet";
+
+    function normal(v) {
+      return String(v == null ? "" : v)
+        .replace(/\uFEFF/g, "")
+        .normalize("NFKC")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLocaleUpperCase("id-ID");
+    }
+
+    function rupiah(n) {
+      return "Rp " + Number(n || 0).toLocaleString("id-ID", { maximumFractionDigits: 2 });
+    }
+
+    function persenTeks(n) {
+      return n.toLocaleString("id-ID", {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1
+      }) + "%";
+    }
+
+    function labelBulan(kode) {
+      return NAMA_BULAN[Number(kode.slice(4)) - 1] + " " + kode.slice(0, 4);
+    }
+
+    function labelSingkat(kode) {
+      return NAMA_SINGKAT[Number(kode.slice(4)) - 1] + " " + kode.slice(2, 4);
+    }
+
+    function batas(n) {
+      return Math.min(Math.max(n, 0), BULAN.length - JUMLAH_BALOK);
+    }
+
+    // Mencari nama sumber "outlet:NAMA PSR" di sheet.js
+    function cariKunci() {
+      const target = normal("outlet:" + psr);
+      const sumber = window.SheetData && SheetData.daftarSumber ? SheetData.daftarSumber() : [];
+      const cocok = sumber.find(x => normal(x.nama) === target);
+      return cocok ? cocok.nama : "outlet:" + psr;
+    }
+
+    // Menjumlahkan setiap kolom bulan untuk outlet ini dari tab PSR
+    function hitung(d) {
+      const header = d.header || [];
+      const colOutlet = header.find(h => /OUTLET|TOKO/.test(normal(h)));
+      if (!colOutlet) return { error: "Kolom nama outlet tidak ditemukan di tab PSR." };
+
+      const kolom = {};
+      BULAN.forEach(k => { kolom[k] = header.find(h => normal(h) === k) || null; });
+
+      const target = normal(outlet);
+      const hasil = {};
+      BULAN.forEach(k => { hasil[k] = 0; });
+
+      let baris = 0;
+      (d.objects || []).forEach(r => {
+        if (normal(r[colOutlet]) !== target) return;
+        baris++;
+        BULAN.forEach(k => {
+          if (kolom[k]) hasil[k] += SheetData.toNumber(r[kolom[k]]);
+        });
+      });
+
+      if (!baris) {
+        return { error: "Outlet \"" + outlet + "\" tidak ditemukan di tab PSR. Periksa penulisan nama outlet." };
+      }
+
+      return { nilai: hasil, tanpa: BULAN.filter(k => !kolom[k]) };
+    }
+
+    function pilihBulan(kode) {
+      terpilih = kode;
+      awal = batas(BULAN.indexOf(kode) - Math.floor(JUMLAH_BALOK / 2));
+      gambar();
+    }
+
+    function tampilPerubahan() {
+      const el = $("perubahan");
+      const idx = BULAN.indexOf(terpilih);
+
+      if (!nilai || idx === 0) {
+        el.className = "mt-2 break-words text-xs text-slate-500";
+        el.textContent = nilai ? "Bulan pertama, belum ada pembanding." : "";
+        return;
+      }
+
+      const kodeSebelum = BULAN[idx - 1];
+      const sekarang = nilai[terpilih] || 0;
+      const sebelum = nilai[kodeSebelum] || 0;
+
+      if (!sebelum) {
+        el.className = "mt-2 break-words text-xs text-slate-500";
+        el.textContent = "Data " + labelSingkat(kodeSebelum) + " kosong, perubahan belum bisa dihitung.";
+        return;
+      }
+
+      const beda = sekarang - sebelum;
+      if (beda === 0) {
+        el.className = "mt-2 break-words text-xs text-slate-500";
+        el.textContent = "Tidak berubah dibanding " + labelSingkat(kodeSebelum) + ".";
+        return;
+      }
+
+      const naik = beda > 0;
+      const pct = Math.abs(beda) / sebelum * 100;
+      el.className = "mt-2 break-words text-xs font-bold " +
+        (naik ? "text-emerald-600" : "text-rose-600");
+      el.textContent =
+        (naik ? "▲ Naik " : "▼ Turun ") + persenTeks(pct) +
+        " (" + (naik ? "+" : "-") + rupiah(Math.abs(beda)) + ") dibanding " +
+        labelSingkat(kodeSebelum);
+    }
+
+    function tampilRingkasan() {
+      const ids = ["rkTertinggi", "rkTerendah", "rkRata", "rkTotal"];
+      const aktif = nilai ? BULAN.filter(k => (nilai[k] || 0) > 0) : [];
+
+      if (!aktif.length) {
+        ids.forEach(id => { $(id).textContent = "-"; });
+        return;
+      }
+
+      let tinggi = aktif[0];
+      let rendah = aktif[0];
+      let total = 0;
+      aktif.forEach(k => {
+        const n = nilai[k];
+        total += n;
+        if (n > nilai[tinggi]) tinggi = k;
+        if (n < nilai[rendah]) rendah = k;
+      });
+
+      $("rkTertinggi").textContent = labelSingkat(tinggi) + " · " + rupiah(nilai[tinggi]);
+      $("rkTerendah").textContent = labelSingkat(rendah) + " · " + rupiah(nilai[rendah]);
+      $("rkRata").textContent = rupiah(total / aktif.length);
+      $("rkTotal").textContent = rupiah(total);
+    }
+
+    function tampilRiwayat() {
+      const ol = $("riwayat");
+      ol.replaceChildren();
+
+      for (let i = BULAN.length - 1; i >= 0; i--) {
+        const kode = BULAN[i];
+        const n = nilai ? (nilai[kode] || 0) : 0;
+        const sebelum = i > 0 && nilai ? (nilai[BULAN[i - 1]] || 0) : 0;
+
+        const li = document.createElement("li");
+        li.className = "flex cursor-pointer items-center justify-between gap-3 py-3 transition hover:bg-indigo-50";
+        li.addEventListener("click", () => pilihBulan(kode));
+
+        const kiri = document.createElement("div");
+        kiri.className = "min-w-0";
+
+        const namaBulan = document.createElement("p");
+        namaBulan.className = "text-sm font-semibold text-slate-800";
+        namaBulan.textContent = labelBulan(kode);
+
+        const perubahan = document.createElement("p");
+        perubahan.className = "text-xs font-semibold text-slate-500";
+
+        if (i === 0 || !sebelum) {
+          perubahan.textContent = "-";
+        } else {
+          const beda = n - sebelum;
+          const pct = Math.abs(beda) / sebelum * 100;
+          if (beda === 0) {
+            perubahan.textContent = "Tidak berubah";
+          } else {
+            perubahan.className = "text-xs font-bold " +
+              (beda > 0 ? "text-emerald-600" : "text-rose-600");
+            perubahan.textContent = (beda > 0 ? "▲ " : "▼ ") + persenTeks(pct);
+          }
+        }
+
+        kiri.append(namaBulan, perubahan);
+
+        const nilaiEl = document.createElement("p");
+        nilaiEl.className = "shrink-0 whitespace-nowrap text-xs font-bold text-slate-900";
+        nilaiEl.textContent = rupiah(n);
+
+        li.append(kiri, nilaiEl);
+        ol.appendChild(li);
+      }
+    }
+
+    function gambar() {
+      const ada = !!nilai;
+      const nilaiBulan = k => (ada ? (nilai[k] || 0) : 0);
+      const maks = Math.max(1, ...BULAN.map(nilaiBulan));
+
+      $("bulanTerpilih").textContent = labelBulan(terpilih);
+      $("salesTerpilih").textContent = ada ? rupiah(nilaiBulan(terpilih)) : "-";
+      tampilPerubahan();
+
+      // chip bulan
+      const strip = $("bulanStrip");
+      strip.replaceChildren();
+      BULAN.forEach(kode => {
+        const aktif = kode === terpilih;
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.textContent = labelSingkat(kode);
+        chip.className =
+          "shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition " +
+          (aktif ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-indigo-50");
+        chip.addEventListener("click", () => pilihBulan(kode));
+        strip.appendChild(chip);
+      });
+
+      // balok bulan (6 bulan per jendela)
+      const wrap = $("barWrap");
+      const labels = $("barLabels");
+      wrap.replaceChildren();
+      labels.replaceChildren();
+
+      BULAN.slice(awal, awal + JUMLAH_BALOK).forEach(kode => {
+        const n = nilaiBulan(kode);
+        const teksNilai = ada ? rupiah(n) : "data belum tersedia";
+
+        const tombol = document.createElement("button");
+        tombol.type = "button";
+        tombol.className = "flex h-full min-w-0 flex-col items-center justify-end";
+        tombol.title = labelBulan(kode) + ": " + teksNilai;
+        tombol.setAttribute("aria-label", "Pilih " + labelBulan(kode) + ", " + teksNilai);
+
+        const balok = document.createElement("span");
+        balok.className =
+          "w-full max-w-[30px] rounded-t-lg transition-all duration-300 " +
+          (kode === terpilih ? "bg-indigo-600" : "bg-indigo-200");
+        balok.style.height = n > 0 ? Math.max(4, Math.round(n / maks * 100)) + "%" : "2px";
+
+        tombol.appendChild(balok);
+        tombol.addEventListener("click", () => pilihBulan(kode));
+        wrap.appendChild(tombol);
+
+        const label = document.createElement("span");
+        label.textContent = labelSingkat(kode);
+        label.className = kode === terpilih ? "font-bold text-indigo-600" : "";
+        labels.appendChild(label);
+      });
+
+      $("bulanPrev").disabled = awal === 0;
+      $("bulanNext").disabled = awal >= BULAN.length - JUMLAH_BALOK;
+
+      tampilRingkasan();
+      tampilRiwayat();
+    }
+
+    function render() {
+      const d = window.SheetData
+        ? SheetData.get(cariKunci())
+        : { status: "kosong", header: [], objects: [] };
+
+      if (d.status === "memuat") {
+        nilai = null;
+        tampilPesan("Memuat data outlet...", "netral");
+        gambar();
+        return;
+      }
+
+      if (d.status === "kosong") {
+        nilai = null;
+        tampilPesan("Tab PSR belum disambungkan di sheet.js.", "merah");
+        gambar();
+        return;
+      }
+
+      if (!(d.objects || []).length) {
+        nilai = null;
+        tampilPesan(
+          d.status === "error"
+            ? "Gagal memuat data. Periksa link CSV di sheet.js."
+            : "Belum ada data di tab PSR.",
+          "merah"
+        );
+        gambar();
+        return;
+      }
+
+      const h = hitung(d);
+      if (h.error) {
+        nilai = null;
+        tampilPesan(h.error, "merah");
+        gambar();
+        return;
+      }
+
+      nilai = h.nilai;
+
+      if (h.tanpa.length) {
+        tampilPesan(
+          "Kolom berikut belum ada di tab PSR, jadi nilainya dianggap 0: " + h.tanpa.join(", "),
+          "kuning"
+        );
+      } else {
+        sembunyikanPesan();
+      }
+
+      gambar();
+    }
+
+    $("bulanPrev").addEventListener("click", () => {
+      awal = batas(awal - 1);
+      gambar();
+    });
+
+    $("bulanNext").addEventListener("click", () => {
+      awal = batas(awal + 1);
+      gambar();
+    });
+
+    render();
+    if (window.SheetData) SheetData.onUpdate(render);
+  })();
+  </script>
+</body>
+</html>
