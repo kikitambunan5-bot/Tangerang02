@@ -671,9 +671,9 @@
 
                   /* ===================== TOTAL SALES (BALOK) ===================== */
 const BULAN_SELESAI = "202611";
-const JUMLAH_TAMPIL = 6;     // jumlah balok yang tampil sekaligus
-const BARIS_TOTAL = 361;     // nomor baris total di spreadsheet (M361 s/d W361)
-const TINGGI_BALOK = 96;     // tinggi maksimal balok (px)
+const JUMLAH_TAMPIL = 6;      // jumlah balok yang tampil sekaligus
+const BARIS_TOTAL = 361;      // baris total di spreadsheet (M361 s/d W361)
+const TINGGI_BALOK = 96;      // tinggi maksimal balok (px)
 
 const NAMA_BULAN = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
 const NAMA_BULAN_PANJANG = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
@@ -682,14 +682,16 @@ const NAMA_BULAN_PANJANG = ["Januari","Februari","Maret","April","Mei","Juni","J
 const DAFTAR_BULAN = [];
 for (let n = 1; n <= 11; n++) DAFTAR_BULAN.push("2026" + String(n).padStart(2, "0"));
 
+// state pilihan
+let bulanAktif = null;                                 // null = otomatis (bulan terakhir yang ada datanya)
+let awalJendela = DAFTAR_BULAN.length - JUMLAH_TAMPIL; // jendela awal: Jun 26 s/d Nov 26
+
 function labelPendek(kode) {
-  const m = Number(kode.slice(4)) - 1;
-  return NAMA_BULAN[m] + " " + kode.slice(2, 4);
+  return NAMA_BULAN[Number(kode.slice(4)) - 1] + " " + kode.slice(2, 4);
 }
 
 function labelPanjang(kode) {
-  const m = Number(kode.slice(4)) - 1;
-  return NAMA_BULAN_PANJANG[m] + " 20" + kode.slice(2, 4);
+  return NAMA_BULAN_PANJANG[Number(kode.slice(4)) - 1] + " 20" + kode.slice(2, 4);
 }
 
 function rupiahPenuh(n) {
@@ -702,25 +704,22 @@ function angka(v) {
 }
 
 function totalBulan(total, kode) {
-  if (!total) return 0;
-  return angka(total[kode]);
-}
-
-function nilaiBulan(data, kode) {
-  // jika baris total belum terbaca, pakai contoh supaya grafik tetap tampil
-  if (adaTotal(data)) return totalBulan(data.total, kode);
-  return DEMO_VALUES[DAFTAR_BULAN.indexOf(kode)] || 0;
+  return total ? angka(total[kode]) : 0;
 }
 
 function adaTotal(data) {
   return !!data.total && DAFTAR_BULAN.some(k => totalBulan(data.total, k) > 0);
 }
 
-// baris total: baris 361 spreadsheet = indeks 359 di objects (objects[0] = baris 2)
+function nilaiBulan(data, kode) {
+  if (adaTotal(data)) return totalBulan(data.total, kode);
+  return DEMO_VALUES[DAFTAR_BULAN.indexOf(kode)] || 0;
+}
+
 function cariBarisTotal(objects) {
   const adaAngka = r => !!r && DAFTAR_BULAN.some(k => angka(r[k]) > 0);
 
-  // 1) coba posisi baris 361 (indeks 359)
+  // 1) posisi baris 361 (indeks 359)
   const posisi = objects[BARIS_TOTAL - 2];
   if (adaAngka(posisi)) return posisi;
 
@@ -740,31 +739,23 @@ function ambilData() {
   return { ...d, objects: tanpaTotal, total };
 }
 
-// state
-let bulanAktif = null;                                   // null = otomatis
-let awalJendela = DAFTAR_BULAN.length - JUMLAH_TAMPIL;   // Jun 26 s/d Nov 26
-
 function maksAwal() {
   return DAFTAR_BULAN.length - JUMLAH_TAMPIL;
+}
+
+function batasi(n, min, max) {
+  return Math.min(Math.max(n, min), max);
 }
 
 function bulanTampil(data) {
   if (bulanAktif) return bulanAktif;
   for (let i = DAFTAR_BULAN.length - 1; i >= 0; i--) {
-    if (totalBulan(data.total, DAFTAR_BULAN[i]) > 0) return DAFTAR_BULAN[i];
+    if (nilaiBulan(data, DAFTAR_BULAN[i]) > 0) return DAFTAR_BULAN[i];
   }
   return BULAN_SELESAI;
 }
 
-function pastikanTerlihat(kode) {
-  const idx = DAFTAR_BULAN.indexOf(kode);
-  if (idx < 0) return;
-  if (idx < awalJendela) awalJendela = idx;
-  else if (idx >= awalJendela + JUMLAH_TAMPIL) awalJendela = idx - JUMLAH_TAMPIL + 1;
-  awalJendela = Math.min(Math.max(0, awalJendela), maksAwal());
-}
-
-function renderStripBulan(bulan) {
+function gambarStrip(bulan) {
   const wrap = document.getElementById("bulanStrip");
   if (!wrap) return;
   wrap.innerHTML = "";
@@ -829,23 +820,24 @@ function gambarGrafik(data) {
   if (prev) prev.disabled = awalJendela <= 0;
   if (next) next.disabled = awalJendela >= maksAwal();
 
-  renderStripBulan(bulan);
+  gambarStrip(bulan);
 }
 
 function geserJendela(arah) {
-  awalJendela = Math.min(Math.max(0, awalJendela + arah), maksAwal());
+  awalJendela = batasi(awalJendela + arah, 0, maksAwal());
   if (lastData) gambarGrafik(lastData);
 }
 
 function pilihBulan(kode) {
   bulanAktif = kode;
-  pastikanTerlihat(kode);
+  // grafik berpusat di bulan yang dipilih (jika memungkinkan)
+  const idx = DAFTAR_BULAN.indexOf(kode);
+  awalJendela = batasi(idx - Math.floor(JUMLAH_TAMPIL / 2), 0, maksAwal());
   if (lastData) {
     renderRingkas(lastData);
     gambarGrafik(lastData);
   }
 }
-
       /* ===================== PERINGKAT SALES ===================== */
       const RANK_CLS = [
         "bg-amber-100 text-amber-700",
@@ -958,7 +950,8 @@ function pilihBulan(kode) {
         });
       }
 
-                  /* ===================== RENDER UTAMA ===================== */
+                 /* ===================== RENDER UTAMA ===================== */
+const RING_C = 2 * Math.PI * 34;
 
 function isiTeks(id, teks) {
   const el = document.getElementById(id);
@@ -986,6 +979,18 @@ function renderRingkas(data) {
   isiTeks("sumBulan", ada ? rupiahPenuh(nilai) : "-");
   isiTeks("sumRata", ada ? rupiahPenuh(rata) : "-");
   isiTeks("sumMax", ada ? rupiahPenuh(maks) : "-");
+
+  // angka dibuat tampil penuh: tidak dipotong, boleh turun baris
+  const penuh = {
+    pctNum: "mt-1 break-words text-lg font-extrabold text-slate-900",
+    sumBulan: "mt-1 break-words text-xs font-bold leading-snug text-slate-800",
+    sumRata: "mt-1 break-words text-xs font-bold leading-snug text-slate-800",
+    sumMax: "mt-1 break-words text-xs font-bold leading-snug text-slate-800",
+  };
+  Object.keys(penuh).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.className = penuh[id];
+  });
 }
 
 function render() {
@@ -996,7 +1001,6 @@ function render() {
   renderRingkas(data);
   gambarGrafik(data);
 }
-
       /* ===================== MULAI ===================== */
 const btnPrev = document.getElementById("btnBulanPrev");
 const btnNext = document.getElementById("btnBulanNext");
