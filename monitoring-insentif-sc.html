@@ -99,7 +99,7 @@
     const el = id => document.getElementById(id);
 
     const KUNCI_PSR = "resumeGt";
-    const KUNCI_INSENTIF = "insentifSc"; // ganti jika nama kunci di sheet.js berbeda
+    const KUNCI_INSENTIF = "insentifSc";
     const PERIODE = "202611";
     const LABEL_PERIODE = "November 2026";
     const psrPilih = (new URLSearchParams(location.search).get("psr") || "").trim();
@@ -133,10 +133,13 @@
 
     function toNum(v) {
       if (typeof v === "number") return v;
+      const s = String(v ?? "").trim();
+      if (s === "") return 0;
       if (typeof SheetData !== "undefined" && typeof SheetData.toNumber === "function") {
-        return Number(SheetData.toNumber(v)) || 0;
+        const n = Number(SheetData.toNumber(s));
+        if (!isNaN(n)) return n;
       }
-      return Number(String(v ?? "").replace(/[^0-9-]/g, "")) || 0;
+      return Number(s.replace(/[^0-9-]/g, "")) || 0;
     }
 
     function rupiah(n) {
@@ -155,22 +158,9 @@
       p.classList.toggle("hidden", !teks);
     }
 
-    function cocokPeriode(teks) {
-      const t = normal(teks);
-      const angka = t.replace(/\D/g, "");
-      return angka.includes(PERIODE) || t.includes("NOV 2026") || t.includes("NOVEMBER 2026") || t.includes("NOV-2026");
-    }
-
     function kolomPsr(header) {
       let k = header.find(h => normal(h) === "NAMA PSR");
       if (!k) k = header.find(h => normal(h).includes("PSR"));
-      return k || null;
-    }
-
-    function kolomOutlet(header) {
-      let k = header.find(h => normal(h) === "NAMA OUTLET");
-      if (!k) k = header.find(h => normal(h).includes("OUTLET"));
-      if (!k) k = header.find(h => normal(h).includes("TOKO"));
       return k || null;
     }
 
@@ -194,45 +184,44 @@
       return hasil;
     }
 
-    // Daftar outlet milik PSR terpilih, hanya periode 202611
+    // Menjumlahkan nilai periode 202611 per outlet untuk PSR terpilih
     function olahOutlet(d) {
-      const header = d.header || [];
-      const kPsr = kolomPsr(header);
-      const kOutlet = kolomOutlet(header);
-      if (!kPsr || !kOutlet) {
-        return { error: "Kolom NAMA PSR atau NAMA OUTLET tidak ditemukan di tab insentifSc." };
+      const rows = (d.rows || []).map(r => (r || []).map(c => String(c ?? "").trim()));
+      const tanpaDesimal = c => c.replace(/\.0$/, "");
+
+      // Cari baris header: baris yang memuat 202611 dan kata PSR/OUTLET/TOKO
+      let hIdx = rows.findIndex(r =>
+        r.some(c => tanpaDesimal(c) === PERIODE) &&
+        r.some(c => /PSR|OUTLET|TOKO/i.test(c))
+      );
+      if (hIdx < 0) hIdx = rows.findIndex(r => r.some(c => tanpaDesimal(c) === PERIODE));
+      if (hIdx < 0) {
+        console.log("Baris pertama tab insentifSc:", rows.slice(0, 5));
+        return { error: "Kolom periode 202611 tidak ditemukan di tab insentifSc." };
       }
 
-      // Mode 1: ada kolom bernama persis 202611 (nilai per outlet ada di kolom itu)
-      // Mode 2: ada kolom PERIODE, lalu baris dengan periode 202611 dijumlahkan
-      let mode = null;
-      let kNilai = null;
-      let kPeriode = null;
+      const header = rows[hIdx];
+      const kBulan = header.findIndex(c => tanpaDesimal(c) === PERIODE);
 
-      const kBulan = header.find(h => normal(h) === PERIODE);
-      if (kBulan) {
-        mode = "kolom";
-        kNilai = kBulan;
-      } else {
-        kPeriode = header.find(h => ["PERIODE", "PERIOD", "BULAN", "PERIODE BULAN"].includes(normal(h)));
-        if (kPeriode) {
-          mode = "baris";
-          kNilai = header.find(h => /INSENTIF|NOMINAL|NILAI|BONUS/.test(normal(h))) || null;
-        }
-      }
+      let kPsr = header.findIndex(c => normal(c) === "NAMA PSR");
+      if (kPsr < 0) kPsr = header.findIndex(c => normal(c).includes("PSR"));
 
-      if (!mode) {
-        console.log("Header insentifSc:", header);
-        return { error: "Kolom periode " + PERIODE + " tidak ditemukan di tab insentifSc." };
+      let kOutlet = header.findIndex(c => normal(c) === "NAMA OUTLET");
+      if (kOutlet < 0) kOutlet = header.findIndex(c => /OUTLET|TOKO/.test(normal(c)));
+
+      if (kPsr < 0 || kOutlet < 0) {
+        console.log("Header yang terbaca:", header);
+        return { error: "Kolom NAMA PSR atau NAMA OUTLET tidak ditemukan di baris header tab insentifSc." };
       }
 
       const peta = new Map();
       let psrAktif = "";
 
-      for (const baris of d.objects || []) {
-        const psr = String(baris[kPsr] ?? "").trim();
-        const outlet = String(baris[kOutlet] ?? "").trim();
+      for (const r of rows.slice(hIdx + 1)) {
+        const psr = r[kPsr] || "";
+        const outlet = r[kOutlet] || "";
 
+        // Baris total dilewati. Nama PSR yang kosong mengikuti baris sebelumnya (sel digabung)
         if (psr) {
           if (/^(TOTAL|JUMLAH|GRAND)/.test(normal(psr))) { psrAktif = ""; continue; }
           psrAktif = psr;
@@ -242,15 +231,9 @@
         const pemilik = psr || psrAktif;
         if (normal(pemilik) !== normal(psrPilih)) continue;
 
-        let nilai;
-        if (mode === "kolom") {
-          const raw = baris[kNilai];
-          if (String(raw ?? "").trim() === "") continue;
-          nilai = toNum(raw);
-        } else {
-          if (!cocokPeriode(baris[kPeriode])) continue;
-          nilai = kNilai ? toNum(baris[kNilai]) : 0;
-        }
+        const raw = r[kBulan] || "";
+        if (raw === "") continue;
+        const nilai = toNum(raw);
 
         const kunci = normal(outlet);
         const ada = peta.get(kunci);
@@ -263,11 +246,7 @@
       );
       const total = list.reduce((s, o) => s + o.nilai, 0);
 
-      return {
-        list,
-        total,
-        adaNilai: mode === "kolom" || !!kNilai
-      };
+      return { list, total, adaNilai: true };
     }
 
     function tampilDaftarPsr() {
@@ -291,12 +270,12 @@
         <li class="flex items-center gap-3 rounded-2xl px-3 py-3">
           <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">${i + 1}</span>
           <span class="flex-1 text-sm font-semibold">${escHtml(o.nama)}</span>
-          ${adaNilai ? `<span class="whitespace-nowrap text-sm font-bold text-slate-700">${rupiah(o.nilai)}</span>` : ""}
+          <span class="whitespace-nowrap text-sm font-bold text-slate-700">${rupiah(o.nilai)}</span>
         </li>`).join("");
 
       el("jumlahOutlet").textContent = daftarOutlet.length + " outlet";
       el("rkJumlah").textContent = daftarOutlet.length;
-      el("rkTotal").textContent = adaNilai ? rupiah(totalNilai) : "-";
+      el("rkTotal").textContent = rupiah(totalNilai);
       el("listOutletKosong").classList.toggle("hidden", daftarOutlet.length > 0);
     }
 
@@ -323,7 +302,6 @@
 
       daftarOutlet = [];
       totalNilai = 0;
-      adaNilai = false;
 
       let teks = "";
       if (d.status === "kosong") {
@@ -337,7 +315,6 @@
         } else {
           daftarOutlet = hasil.list;
           totalNilai = hasil.total;
-          adaNilai = hasil.adaNilai;
         }
       }
 
