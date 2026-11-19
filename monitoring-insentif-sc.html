@@ -16,9 +16,8 @@
 </head>
 <body class="min-h-screen bg-[#eef2f8] text-slate-900">
 
-  <div class="mx-auto w-full max-w-xl px-5 pt-6 pb-10">
-
-    <!-- Header -->
+  <!-- Header, sama seperti Data Tim Sales -->
+  <div class="mx-auto w-full max-w-xl px-5 pt-6 pb-4">
     <div class="flex items-center justify-between">
       <a href="index.html" class="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow" aria-label="Kembali">
         <i data-lucide="arrow-left" class="h-5 w-5"></i>
@@ -31,9 +30,12 @@
         <i data-lucide="menu" class="h-5 w-5"></i>
       </button>
     </div>
+  </div>
+
+  <div class="mx-auto w-full max-w-xl px-4 pb-10">
 
     <!-- Kartu judul -->
-    <div class="mt-6 rounded-[28px] bg-[#0b0d12] p-6 text-white shadow-xl">
+    <div class="rounded-[28px] bg-[#0b0d12] p-6 text-white shadow-xl">
       <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Tim Tangerang · ASM Rizky Daniel</p>
       <h1 class="mt-2 text-2xl font-extrabold">Monitoring Insentif SC</h1>
       <p class="mt-1 text-sm text-slate-400">Daftar PSR</p>
@@ -52,31 +54,21 @@
       <input id="cariPsr" type="search" placeholder="Cari nama PSR..."
              class="mt-4 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400">
 
+      <p id="pesan" class="mt-4 hidden rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800"></p>
+
       <ul id="listPsr" class="mt-4 space-y-1"></ul>
       <p id="listKosong" class="hidden py-8 text-center text-sm text-slate-500">Tidak ada PSR.</p>
     </div>
 
   </div>
 
-  <!-- Menu samping -->
-  <div id="navOverlay" class="fixed inset-0 z-40 hidden bg-black/40"></div>
-  <aside id="navDrawer" class="fixed right-0 top-0 z-50 h-full w-72 translate-x-full bg-white p-5 shadow-2xl transition-transform duration-300">
-    <div class="mb-6 flex items-center justify-between">
-      <p class="font-bold">Menu</p>
-      <button id="navClose" class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100" aria-label="Tutup">
-        <i data-lucide="x" class="h-4 w-4"></i>
-      </button>
-    </div>
-    <nav class="space-y-2">
-      <a href="monitoring-kunjungan.html" class="block rounded-xl px-4 py-3 text-sm font-semibold hover:bg-slate-100">Monitoring Kunjungan</a>
-      <a href="data-tim-sales.html" class="block rounded-xl px-4 py-3 text-sm font-semibold hover:bg-slate-100">Data Tim Sales</a>
-      <a href="monitoring-insentif-sc.html" class="block rounded-xl px-4 py-3 text-sm font-semibold hover:bg-slate-100">Monitoring Insentif SC</a>
-    </nav>
-  </aside>
-
   <script>
     const el = id => document.getElementById(id);
     let semuaNama = [];
+
+    function siap() {
+      return typeof SheetData !== "undefined" && typeof SheetData.get === "function";
+    }
 
     function escHtml(s) {
       return String(s ?? "").replace(/[&<>"']/g, c => ({
@@ -88,7 +80,6 @@
       return String(s ?? "").normalize("NFKC").replace(/\s+/g, " ").trim().toLocaleUpperCase("id-ID");
     }
 
-    // Mengambil nama PSR unik dari kolom NAMA PSR di tab resumeGt
     function ambilNamaPsr(d) {
       const header = d.header || [];
       let kolom = header.find(h => normal(h) === "NAMA PSR");
@@ -117,13 +108,6 @@
       error: "Gagal"
     };
 
-    function render() {
-      const d = SheetData.get("resumeGt");
-      el("statusBadge").textContent = LABEL_STATUS[d.status] || d.status;
-      semuaNama = (d.status === "ok" || d.status === "cache") ? ambilNamaPsr(d) : [];
-      tampilDaftar();
-    }
-
     function tampilDaftar() {
       const q = normal(el("cariPsr").value);
       const hasil = semuaNama.filter(n => normal(n).includes(q));
@@ -137,8 +121,37 @@
       el("listKosong").classList.toggle("hidden", hasil.length > 0);
     }
 
+    function render() {
+      const pesan = el("pesan");
+      pesan.classList.add("hidden");
+      semuaNama = [];
+
+      if (!siap()) {
+        el("statusBadge").textContent = "Gagal";
+        pesan.textContent = "sheet.js belum termuat dengan benar. Periksa error sintaks di baris 26 sheet.js (koma di akhir baris sebelumnya).";
+        pesan.classList.remove("hidden");
+        tampilDaftar();
+        return;
+      }
+
+      const d = SheetData.get("resumeGt");
+      el("statusBadge").textContent = LABEL_STATUS[d.status] || d.status;
+
+      if (d.status === "ok" || d.status === "cache") {
+        semuaNama = ambilNamaPsr(d);
+      } else if (d.status === "error") {
+        pesan.textContent = "Data gagal dimuat. Pastikan tab resumeGt sudah dipublish sebagai CSV.";
+        pesan.classList.remove("hidden");
+      } else if (d.status === "kosong") {
+        pesan.textContent = "Link resumeGt belum diisi di sheet.js.";
+        pesan.classList.remove("hidden");
+      }
+
+      tampilDaftar();
+    }
+
     el("cariPsr").addEventListener("input", tampilDaftar);
-    SheetData.onUpdate(render);
+    if (siap() && typeof SheetData.onUpdate === "function") SheetData.onUpdate(render);
     render();
     lucide.createIcons();
   </script>
