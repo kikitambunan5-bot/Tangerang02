@@ -53,17 +53,14 @@
         </div>
         <span class="status-badge rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">Memuat</span>
       </div>
-
       <input id="cariPsr" type="search" placeholder="Cari nama PSR..."
              class="mt-4 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400">
-
       <ul id="listPsr" class="mt-4 space-y-1"></ul>
       <p id="listKosong" class="hidden py-8 text-center text-sm text-slate-500">Tidak ada PSR.</p>
     </div>
 
     <!-- Tampilan 2: daftar outlet per PSR -->
     <div id="viewOutlet" class="hidden">
-
       <div class="mt-4 rounded-[28px] bg-white p-5 shadow">
         <div class="flex items-center justify-between gap-3">
           <div>
@@ -78,7 +75,7 @@
             <p id="rkJumlah" class="mt-1 text-base font-bold">0</p>
           </div>
           <div class="rounded-2xl bg-slate-50 p-4">
-            <p class="text-xs text-slate-500">Total</p>
+            <p class="text-xs text-slate-500">Total realisasi sales</p>
             <p id="rkTotal" class="mt-1 text-base font-bold">-</p>
           </div>
         </div>
@@ -90,7 +87,39 @@
         <ul id="listOutlet" class="mt-4 space-y-1"></ul>
         <p id="listOutletKosong" class="hidden py-8 text-center text-sm text-slate-500">Belum ada outlet untuk periode November 2026.</p>
       </div>
+    </div>
 
+    <!-- Tampilan 3: detail produk per outlet -->
+    <div id="viewDetail" class="hidden">
+      <div class="mt-4 rounded-[28px] bg-white p-5 shadow">
+        <p class="text-sm font-bold">Total Outlet</p>
+        <p class="text-xs text-slate-500">Periode November 2026</p>
+        <div class="mt-4 grid grid-cols-2 gap-3">
+          <div class="rounded-2xl bg-slate-50 p-4">
+            <p class="text-xs text-slate-500">Qty ST / bulan UB</p>
+            <p id="tQty" class="mt-1 text-base font-bold">-</p>
+          </div>
+          <div class="rounded-2xl bg-slate-50 p-4">
+            <p class="text-xs text-slate-500">Estimasi sales / bln</p>
+            <p id="tEstimasi" class="mt-1 text-base font-bold">-</p>
+          </div>
+          <div class="rounded-2xl bg-slate-50 p-4">
+            <p class="text-xs text-slate-500">Realisasi UB</p>
+            <p id="tRealUb" class="mt-1 text-base font-bold">-</p>
+          </div>
+          <div class="rounded-2xl bg-slate-50 p-4">
+            <p class="text-xs text-slate-500">Realisasi sales</p>
+            <p id="tRealSales" class="mt-1 text-base font-bold">-</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 rounded-[28px] bg-white p-5 shadow">
+        <p class="text-sm font-bold">Detail Produk</p>
+        <p class="text-xs text-slate-500">Urut dari Qty ST / bulan UB tertinggi</p>
+        <ul id="listProduk" class="mt-4 space-y-3"></ul>
+        <p id="listProdukKosong" class="hidden py-8 text-center text-sm text-slate-500">Belum ada produk untuk outlet ini pada periode November 2026.</p>
+      </div>
     </div>
 
   </div>
@@ -102,12 +131,31 @@
     const KUNCI_INSENTIF = "insentifSc";
     const PERIODE = "202611";
     const LABEL_PERIODE = "November 2026";
-    const psrPilih = (new URLSearchParams(location.search).get("psr") || "").trim();
+    const params = new URLSearchParams(location.search);
+    const psrPilih = (params.get("psr") || "").trim();
+    const outletPilih = (params.get("outlet") || "").trim();
 
-    let semuaNama = [];
-    let daftarOutlet = [];
-    let adaNilai = false;
-    let totalNilai = 0;
+    // Kata kunci untuk mengenali kolom di tab insentifSc
+    const ROLE = {
+      psr: /^NAMA PSR$|^PSR$/,
+      outlet: /NAMA OUTLET|^OUTLET$|TOKO/,
+      produk: /PRODUK|PRODUCT|ITEM|SKU|BARANG/,
+      periode: /^PERIODE$|^PERIOD$|^BULAN$/,
+      qty: /QTY/,
+      estimasi: /ESTIMASI/,
+      realUb: /REALISASI.*UB/,
+      realSales: /REALISASI.*SALES/
+    };
+    const NAMA_ROLE = {
+      psr: "NAMA PSR",
+      outlet: "NAMA OUTLET",
+      produk: "PRODUK",
+      periode: "PERIODE",
+      qty: "QTY ST / BULAN UB",
+      estimasi: "ESTIMASI SALES / BLN",
+      realUb: "REALISASI UB",
+      realSales: "REALISASI SALES"
+    };
 
     const LABEL_STATUS = {
       memuat: "Memuat",
@@ -116,6 +164,10 @@
       kosong: "Belum terhubung",
       error: "Gagal"
     };
+
+    let semuaNama = [];
+    let dataInsentif = null;
+    let peranTerbaca = new Set();
 
     function siap() {
       return typeof SheetData !== "undefined" && typeof SheetData.get === "function";
@@ -131,19 +183,26 @@
       return String(s ?? "").normalize("NFKC").replace(/\s+/g, " ").trim().toLocaleUpperCase("id-ID");
     }
 
-    function toNum(v) {
-      if (typeof v === "number") return v;
-      const s = String(v ?? "").trim();
-      if (s === "") return 0;
-      if (typeof SheetData !== "undefined" && typeof SheetData.toNumber === "function") {
-        const n = Number(SheetData.toNumber(s));
-        if (!isNaN(n)) return n;
-      }
-      return Number(s.replace(/[^0-9-]/g, "")) || 0;
+    function bersih(s) {
+      return String(s ?? "").replace(/\s+/g, " ").trim();
     }
 
-    function rupiah(n) {
+    function toNum(v) {
+      let s = String(v ?? "").replace(/Rp/gi, "").replace(/\s/g, "");
+      if (s === "" || s === "-") return 0;
+      if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g, "").replace(",", ".");
+      else if (/^-?\d+,\d+$/.test(s)) s = s.replace(",", ".");
+      else s = s.replace(/,/g, "");
+      const n = parseFloat(s);
+      return isNaN(n) ? 0 : n;
+    }
+
+    function rp(n) {
       return "Rp " + Math.round(n).toLocaleString("id-ID");
+    }
+
+    function num(n) {
+      return Number(n).toLocaleString("id-ID", { maximumFractionDigits: 2 });
     }
 
     function setBadge(status) {
@@ -158,16 +217,16 @@
       p.classList.toggle("hidden", !teks);
     }
 
-    function kolomPsr(header) {
-      let k = header.find(h => normal(h) === "NAMA PSR");
-      if (!k) k = header.find(h => normal(h).includes("PSR"));
-      return k || null;
+    function cocokPeriode(v) {
+      const t = normal(v);
+      return t.replace(/\D/g, "").includes(PERIODE) || /NOV.*2026|NOVEMBER/.test(t);
     }
 
     // Daftar nama PSR unik dari tab resumeGt
     function ambilNamaPsr(d) {
       const header = d.header || [];
-      const kolom = kolomPsr(header);
+      let kolom = header.find(h => normal(h) === "NAMA PSR");
+      if (!kolom) kolom = header.find(h => normal(h).includes("PSR"));
       if (!kolom) return [];
 
       const hasil = [];
@@ -184,69 +243,124 @@
       return hasil;
     }
 
-    // Menjumlahkan nilai periode 202611 per outlet untuk PSR terpilih
-    function olahOutlet(d) {
-      const rows = (d.rows || []).map(r => (r || []).map(c => String(c ?? "").trim()));
-      const tanpaDesimal = c => c.replace(/\.0$/, "");
+    // Membaca tab insentifSc: mencari baris judul, memetakan kolom, lalu mengelompokkan
+    // PSR > outlet > produk untuk periode 202611
+    function olahInsentif(d) {
+      const rows = (d.rows || []).map(r => (r || []).map(c => bersih(c)));
 
-      // Cari baris header: baris yang memuat 202611 dan kata PSR/OUTLET/TOKO
-      let hIdx = rows.findIndex(r =>
-        r.some(c => tanpaDesimal(c) === PERIODE) &&
-        r.some(c => /PSR|OUTLET|TOKO/i.test(c))
-      );
-      if (hIdx < 0) hIdx = rows.findIndex(r => r.some(c => tanpaDesimal(c) === PERIODE));
-      if (hIdx < 0) {
-        console.log("Baris pertama tab insentifSc:", rows.slice(0, 5));
-        return { error: "Kolom periode 202611 tidak ditemukan di tab insentifSc." };
+      let hIdx = -1;
+      let skorMax = 0;
+      for (let i = 0; i < Math.min(rows.length, 60); i++) {
+        const jenis = new Set();
+        rows[i].forEach(c => {
+          const t = normal(c);
+          if (!t) return;
+          Object.keys(ROLE).forEach(k => { if (ROLE[k].test(t)) jenis.add(k); });
+        });
+        const adaInti = jenis.has("psr") || jenis.has("outlet");
+        if (adaInti && jenis.size > skorMax) {
+          skorMax = jenis.size;
+          hIdx = i;
+        }
+      }
+      if (hIdx < 0 || skorMax < 2) {
+        console.log("Baris pertama tab insentifSc:", rows.slice(0, 10));
+        return { error: "Baris judul tab insentifSc tidak terbaca. Tekan F12 lalu lihat Console." };
       }
 
       const header = rows[hIdx];
-      const kBulan = header.findIndex(c => tanpaDesimal(c) === PERIODE);
+      const atas = hIdx > 0 ? rows[hIdx - 1] : [];
+      const kolom = {};
+      Object.keys(ROLE).forEach(k => {
+        let idx = header.findIndex(h => ROLE[k].test(normal(h)));
+        if (idx < 0) {
+          idx = header.findIndex((h, c) => ROLE[k].test(normal((atas[c] || "") + " " + (h || ""))));
+        }
+        if (idx >= 0) kolom[k] = idx;
+      });
 
-      let kPsr = header.findIndex(c => normal(c) === "NAMA PSR");
-      if (kPsr < 0) kPsr = header.findIndex(c => normal(c).includes("PSR"));
+      const terbaca = Object.keys(kolom).map(k => NAMA_ROLE[k]).join(", ") || "(tidak ada)";
+      console.log("Baris judul insentifSc:", hIdx, "| Kolom terbaca:", kolom);
 
-      let kOutlet = header.findIndex(c => normal(c) === "NAMA OUTLET");
-      if (kOutlet < 0) kOutlet = header.findIndex(c => /OUTLET|TOKO/.test(normal(c)));
-
-      if (kPsr < 0 || kOutlet < 0) {
-        console.log("Header yang terbaca:", header);
-        return { error: "Kolom NAMA PSR atau NAMA OUTLET tidak ditemukan di baris header tab insentifSc." };
+      if (kolom.psr === undefined || kolom.outlet === undefined) {
+        return { error: "Kolom NAMA PSR atau NAMA OUTLET tidak ditemukan. Kolom yang terbaca: " + terbaca + "." };
+      }
+      if (kolom.periode === undefined) {
+        return { error: "Kolom PERIODE tidak ditemukan. Kolom yang terbaca: " + terbaca + "." };
       }
 
       const peta = new Map();
       let psrAktif = "";
+      let outletAktif = "";
+      let periodeAktif = "";
 
       for (const r of rows.slice(hIdx + 1)) {
-        const psr = r[kPsr] || "";
-        const outlet = r[kOutlet] || "";
+        // Baris total dilewati
+        const pertama = normal(r.find(c => c !== "") || "");
+        if (/^(GRAND )?(TOTAL|JUMLAH)/.test(pertama)) continue;
 
-        // Baris total dilewati. Nama PSR yang kosong mengikuti baris sebelumnya (sel digabung)
-        if (psr) {
-          if (/^(TOTAL|JUMLAH|GRAND)/.test(normal(psr))) { psrAktif = ""; continue; }
-          psrAktif = psr;
+        const psr = bersih(r[kolom.psr]);
+        const outlet = bersih(r[kolom.outlet]);
+        const periode = bersih(r[kolom.periode]);
+
+        // Sel yang digabung: nilai kosong mengikuti baris di atasnya
+        if (psr) { psrAktif = psr; outletAktif = ""; }
+        if (outlet) outletAktif = outlet;
+        if (periode) periodeAktif = periode;
+
+        if (!psrAktif || !outletAktif) continue;
+        if (!cocokPeriode(periodeAktif)) continue;
+
+        const ambil = k => (kolom[k] === undefined ? "" : r[kolom[k]]);
+        const isi = {
+          qty: ambil("qty"),
+          estimasi: ambil("estimasi"),
+          realUb: ambil("realUb"),
+          realSales: ambil("realSales")
+        };
+        const adaAngka = Object.values(isi).some(v => bersih(v) !== "");
+        if (!adaAngka) continue;
+
+        const produk = bersih(ambil("produk")) || "(tanpa nama produk)";
+
+        const kPsr = normal(psrAktif);
+        const kOutlet = normal(outletAktif);
+        const kProduk = normal(produk);
+
+        if (!peta.has(kPsr)) peta.set(kPsr, { nama: psrAktif, outlet: new Map() });
+        const psrObj = peta.get(kPsr);
+
+        if (!psrObj.outlet.has(kOutlet)) psrObj.outlet.set(kOutlet, { nama: outletAktif, produk: new Map() });
+        const outletObj = psrObj.outlet.get(kOutlet);
+
+        if (!outletObj.produk.has(kProduk)) {
+          outletObj.produk.set(kProduk, { nama: produk, qty: 0, estimasi: 0, realUb: 0, realSales: 0 });
         }
-        if (!outlet || /^(TOTAL|JUMLAH|GRAND)/.test(normal(outlet))) continue;
-
-        const pemilik = psr || psrAktif;
-        if (normal(pemilik) !== normal(psrPilih)) continue;
-
-        const raw = r[kBulan] || "";
-        if (raw === "") continue;
-        const nilai = toNum(raw);
-
-        const kunci = normal(outlet);
-        const ada = peta.get(kunci);
-        if (ada) ada.nilai += nilai;
-        else peta.set(kunci, { nama: outlet, nilai });
+        const p = outletObj.produk.get(kProduk);
+        p.qty += toNum(isi.qty);
+        p.estimasi += toNum(isi.estimasi);
+        p.realUb += toNum(isi.realUb);
+        p.realSales += toNum(isi.realSales);
       }
 
-      const list = [...peta.values()].sort((a, b) =>
-        b.nilai - a.nilai || a.nama.localeCompare(b.nama, "id")
-      );
-      const total = list.reduce((s, o) => s + o.nilai, 0);
+      return { peta, peran: new Set(Object.keys(kolom)) };
+    }
 
-      return { list, total, adaNilai: true };
+    function ringkasOutlet(o) {
+      const t = { qty: 0, estimasi: 0, realUb: 0, realSales: 0 };
+      o.produk.forEach(p => {
+        t.qty += p.qty;
+        t.estimasi += p.estimasi;
+        t.realUb += p.realUb;
+        t.realSales += p.realSales;
+      });
+      return t;
+    }
+
+    function formatNilai(role, v) {
+      if (!peranTerbaca.has(role)) return "-";
+      if (role === "estimasi" || role === "realSales") return rp(v);
+      return num(v);
     }
 
     function tampilDaftarPsr() {
@@ -265,20 +379,6 @@
       el("listKosong").classList.toggle("hidden", hasil.length > 0);
     }
 
-    function tampilOutlet() {
-      el("listOutlet").innerHTML = daftarOutlet.map((o, i) => `
-        <li class="flex items-center gap-3 rounded-2xl px-3 py-3">
-          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">${i + 1}</span>
-          <span class="flex-1 text-sm font-semibold">${escHtml(o.nama)}</span>
-          <span class="whitespace-nowrap text-sm font-bold text-slate-700">${rupiah(o.nilai)}</span>
-        </li>`).join("");
-
-      el("jumlahOutlet").textContent = daftarOutlet.length + " outlet";
-      el("rkJumlah").textContent = daftarOutlet.length;
-      el("rkTotal").textContent = rupiah(totalNilai);
-      el("listOutletKosong").classList.toggle("hidden", daftarOutlet.length > 0);
-    }
-
     function renderPsr() {
       const d = SheetData.get(KUNCI_PSR);
       setBadge(d.status);
@@ -292,34 +392,123 @@
       tampilDaftarPsr();
     }
 
-    function renderOutlet() {
+    function renderOutlet(psrObj) {
       el("judulUtama").textContent = psrPilih;
       el("subJudul").textContent = "Periode " + LABEL_PERIODE;
       el("btnKembali").href = "monitoring-insentif-sc.html";
 
+      const daftar = psrObj
+        ? [...psrObj.outlet.values()].map(o => ({ nama: o.nama, ...ringkasOutlet(o) }))
+        : [];
+      daftar.sort((a, b) => b.realSales - a.realSales || b.qty - a.qty || a.nama.localeCompare(b.nama, "id"));
+
+      const totalSales = daftar.reduce((s, o) => s + o.realSales, 0);
+
+      el("listOutlet").innerHTML = daftar.map((o, i) => `
+        <li>
+          <a href="monitoring-insentif-sc.html?psr=${encodeURIComponent(psrPilih)}&outlet=${encodeURIComponent(o.nama)}" class="flex items-center gap-3 rounded-2xl px-3 py-3 hover:bg-slate-50">
+            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">${i + 1}</span>
+            <span class="flex-1 text-sm font-semibold">${escHtml(o.nama)}</span>
+            <span class="whitespace-nowrap text-sm font-bold text-slate-700">${formatNilai("realSales", o.realSales)}</span>
+            <span class="text-lg text-slate-400">›</span>
+          </a>
+        </li>`).join("");
+
+      el("jumlahOutlet").textContent = daftar.length + " outlet";
+      el("rkJumlah").textContent = daftar.length;
+      el("rkTotal").textContent = formatNilai("realSales", totalSales);
+      el("listOutletKosong").classList.toggle("hidden", daftar.length > 0);
+    }
+
+    function renderDetail(outletObj) {
+      el("judulUtama").textContent = outletObj ? outletObj.nama : outletPilih;
+      el("subJudul").textContent = psrPilih + " · " + LABEL_PERIODE;
+      el("btnKembali").href = "monitoring-insentif-sc.html?psr=" + encodeURIComponent(psrPilih);
+
+      if (!outletObj) {
+        tampilPesan("Outlet ini tidak ditemukan untuk periode November 2026.");
+        el("listProduk").innerHTML = "";
+        el("listProdukKosong").classList.remove("hidden");
+        return;
+      }
+
+      const t = ringkasOutlet(outletObj);
+      el("tQty").textContent = formatNilai("qty", t.qty);
+      el("tEstimasi").textContent = formatNilai("estimasi", t.estimasi);
+      el("tRealUb").textContent = formatNilai("realUb", t.realUb);
+      el("tRealSales").textContent = formatNilai("realSales", t.realSales);
+
+      const produk = [...outletObj.produk.values()].sort((a, b) =>
+        b.qty - a.qty || a.nama.localeCompare(b.nama, "id")
+      );
+
+      el("listProduk").innerHTML = produk.map((p, i) => `
+        <li class="rounded-2xl border border-slate-100 p-4">
+          <div class="flex items-start gap-3">
+            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">${i + 1}</span>
+            <p class="text-sm font-bold leading-snug">${escHtml(p.nama)}</p>
+          </div>
+          <div class="mt-3 grid grid-cols-2 gap-2">
+            <div class="rounded-xl bg-slate-50 p-3">
+              <p class="text-[11px] text-slate-500">Qty ST / bulan UB</p>
+              <p class="mt-1 text-sm font-bold">${formatNilai("qty", p.qty)}</p>
+            </div>
+            <div class="rounded-xl bg-slate-50 p-3">
+              <p class="text-[11px] text-slate-500">Estimasi sales / bln</p>
+              <p class="mt-1 text-sm font-bold">${formatNilai("estimasi", p.estimasi)}</p>
+            </div>
+            <div class="rounded-xl bg-slate-50 p-3">
+              <p class="text-[11px] text-slate-500">Realisasi UB</p>
+              <p class="mt-1 text-sm font-bold">${formatNilai("realUb", p.realUb)}</p>
+            </div>
+            <div class="rounded-xl bg-slate-50 p-3">
+              <p class="text-[11px] text-slate-500">Realisasi sales</p>
+              <p class="mt-1 text-sm font-bold">${formatNilai("realSales", p.realSales)}</p>
+            </div>
+          </div>
+        </li>`).join("");
+      el("listProdukKosong").classList.toggle("hidden", produk.length > 0);
+    }
+
+    function renderInsentif() {
       const d = SheetData.get(KUNCI_INSENTIF);
       setBadge(d.status);
 
-      daftarOutlet = [];
-      totalNilai = 0;
-
-      let teks = "";
       if (d.status === "kosong") {
-        teks = "Link insentifSc belum diisi di sheet.js.";
-      } else if (d.status === "error") {
-        teks = "Data insentifSc gagal dimuat. Pastikan tab sudah dipublish sebagai CSV.";
-      } else if (d.status === "ok" || d.status === "cache") {
-        const hasil = olahOutlet(d);
-        if (hasil.error) {
-          teks = hasil.error;
-        } else {
-          daftarOutlet = hasil.list;
-          totalNilai = hasil.total;
-        }
+        tampilPesan("Link insentifSc belum diisi di sheet.js.");
+        return;
+      }
+      if (d.status === "error") {
+        tampilPesan("Data insentifSc gagal dimuat. Pastikan tab sudah dipublish sebagai CSV.");
+        return;
+      }
+      if (d.status !== "ok" && d.status !== "cache") return; // masih memuat
+
+      const hasil = olahInsentif(d);
+      if (hasil.error) {
+        dataInsentif = null;
+        peranTerbaca = new Set();
+        tampilPesan(hasil.error);
+        return;
       }
 
-      tampilPesan(teks);
-      tampilOutlet();
+      dataInsentif = hasil;
+      peranTerbaca = hasil.peran;
+      tampilPesan("");
+
+      const psrObj = hasil.peta.get(normal(psrPilih));
+      if (outletPilih) {
+        const outletObj = psrObj && psrObj.outlet.get(normal(outletPilih));
+        renderDetail(outletObj);
+      } else {
+        renderOutlet(psrObj);
+      }
+    }
+
+    function atur() {
+      el("viewPsr").classList.toggle("hidden", !!psrPilih);
+      el("viewOutlet").classList.toggle("hidden", !psrPilih || !!outletPilih);
+      el("viewDetail").classList.toggle("hidden", !(psrPilih && outletPilih));
     }
 
     function render() {
@@ -328,13 +517,11 @@
         tampilPesan("sheet.js belum termuat dengan benar. Periksa error sintaks di sheet.js.");
         return;
       }
-      if (psrPilih) renderOutlet();
+      atur();
+      if (psrPilih) renderInsentif();
       else renderPsr();
     }
 
-    // Inisialisasi
-    el("viewPsr").classList.toggle("hidden", !!psrPilih);
-    el("viewOutlet").classList.toggle("hidden", !psrPilih);
     el("cariPsr").addEventListener("input", tampilDaftarPsr);
     if (siap() && typeof SheetData.onUpdate === "function") SheetData.onUpdate(render);
     render();
