@@ -76,7 +76,13 @@
 
       <div class="mb-3 flex items-center justify-between gap-3">
         <h2 class="text-sm font-bold">Daftar Outlet</h2>
-        <span id="jumlahOutlet" class="text-xs text-slate-400"></span>
+        <div class="flex items-center gap-2">
+          <button id="btnExportOutlet" type="button" title="Export semua produk semua outlet PSR ini ke Excel"
+            class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50">
+            <i data-lucide="file-spreadsheet" class="h-3.5 w-3.5"></i> Export Excel
+          </button>
+          <span id="jumlahOutlet" class="text-xs text-slate-400"></span>
+        </div>
       </div>
       <ul id="listOutlet" class="space-y-2"></ul>
       <p id="listOutletKosong" class="hidden rounded-2xl border border-slate-100 bg-white p-4 text-sm text-slate-500"></p>
@@ -104,7 +110,13 @@
         </div>
       </div>
 
-      <h2 class="mb-3 text-sm font-bold">Detail Produk</h2>
+      <div class="mb-3 flex items-center justify-between gap-3">
+        <h2 class="text-sm font-bold">Detail Produk</h2>
+        <button id="btnExportProduk" type="button" title="Export semua produk outlet ini ke Excel"
+          class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50">
+          <i data-lucide="file-spreadsheet" class="h-3.5 w-3.5"></i> Export Excel
+        </button>
+      </div>
 
       <!-- Filter produk -->
       <div class="mb-2 flex flex-wrap gap-2">
@@ -153,6 +165,7 @@
 
   <script src="sheet.js"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script>
   (function () {
     const KUNCI_PSR = "resumeGt";
@@ -166,6 +179,7 @@
 
     let dataPeta = new Map();
     let dataPsr = [];
+    let psrAktif = null;
     let outletAktif = null;
     let halamanProduk = 1;
     let filterProduk = "semua";
@@ -197,6 +211,7 @@
     const capai = (p) => p.realUb > 0 && p.realUb >= p.qty;
     // Belum mencapai estimasi: Realisasi UB di bawah Qty ST / bulan UB
     const kurang = (p) => p.realUb < p.qty;
+    const statusTeks = (p) => capai(p) ? "MELEBIHI / SESUAI ESTIMASI" : "KURANG DARI ESTIMASI";
 
     function tampilPesan(teks, tipe) {
       const p = el("pesan");
@@ -312,6 +327,75 @@
         if (normal(v.nama) === k) return v;
       }
       return null;
+    }
+
+    /* ---------- Export Excel ---------- */
+    const HEADER_SEMUA = ["NO", "KODE OUTLET", "NAMA OUTLET", "KODE PRODUK", "NAMA PRODUK",
+      "QTY ST / BULAN UB", "ESTIMASI SALES / BLN (RP)", "REALISASI UB", "REALISASI SALES", "STATUS"];
+    const HEADER_OUTLET = ["NO", "KODE PRODUK", "NAMA PRODUK",
+      "QTY ST / BULAN UB", "ESTIMASI SALES / BLN (RP)", "REALISASI UB", "REALISASI SALES", "STATUS"];
+
+    function namaBersih(s) {
+      return bersih(s).replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "data";
+    }
+
+    function unduhExcel(aoa, namaFile, namaSheet) {
+      // Coba buat file .xlsx asli; jika library tidak termuat, turun sebagai CSV
+      if (window.XLSX) {
+        try {
+          const wb = XLSX.utils.book_new();
+          const ws = XLSX.utils.aoa_to_sheet(aoa);
+          ws["!cols"] = aoa[0].map((h) => ({
+            wch: h === "NAMA PRODUK" ? 50 : h === "NAMA OUTLET" ? 32 : Math.min(45, Math.max(10, String(h).length + 4))
+          }));
+          XLSX.utils.book_append_sheet(wb, ws, String(namaSheet).slice(0, 31));
+          XLSX.writeFile(wb, namaFile); // langsung terunduh otomatis
+          return;
+        } catch (err) {
+          console.error("Export xlsx gagal, fallback CSV:", err);
+        }
+      }
+      const csv = "\ufeff" + aoa.map((r) => r.map((c) => {
+        c = String(c == null ? "" : c);
+        return /[",\n\r]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c;
+      }).join(",")).join("\r\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = namaFile.replace(/\.xlsx$/i, ".csv");
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    }
+
+    // Export semua produk dari semua outlet satu PSR
+    function eksporSemuaOutlet() {
+      if (!psrAktif) return;
+      const outlets = Array.from(psrAktif.outlet.values()).map(ringkasOutlet).sort(urutOutlet);
+      const aoa = [HEADER_SEMUA];
+      let no = 0;
+      for (const o of outlets) {
+        for (const p of o.produkList.slice().sort(urutProduk)) {
+          aoa.push([++no, o.kode || "", o.nama, p.kode || "", p.nama, p.qty, p.estimasi, p.realUb, p.realSales, statusTeks(p)]);
+        }
+      }
+      unduhExcel(aoa,
+        "Insentif_SC_" + PERIODE + "_" + namaBersih(psrAktif.nama) + ".xlsx",
+        "Semua Outlet " + PERIODE);
+    }
+
+    // Export semua produk dari outlet yang sedang dibuka
+    function eksporOutletAktif() {
+      if (!outletAktif || outletAktif.produkList.length === 0) return;
+      const psrParam = bersih(new URLSearchParams(location.search).get("psr") || "");
+      const produk = outletAktif.produkList.slice().sort(urutProduk);
+      const aoa = [HEADER_OUTLET].concat(produk.map((p, i) => [
+        i + 1, p.kode || "", p.nama, p.qty, p.estimasi, p.realUb, p.realSales, statusTeks(p)
+      ]));
+      unduhExcel(aoa,
+        "Insentif_SC_" + PERIODE + "_" + namaBersih(psrParam) + "_" + namaBersih(outletAktif.nama) + ".xlsx",
+        "Produk " + PERIODE);
     }
 
     /* ---------- Render: daftar PSR ---------- */
@@ -525,6 +609,7 @@
       filterProduk = modeProduk === "lebih" ? "lebih" : modeProduk === "kurang" ? "kurang" : "semua";
 
       if (!psrParam) {
+        psrAktif = null;
         tampilView("viewPsr");
         el("judulUtama").textContent = "Monitoring Insentif SC";
         el("subJudul").textContent = "Pilih PSR untuk melihat outlet · " + LABEL_PERIODE;
@@ -532,6 +617,7 @@
         renderPsr();
       } else {
         const psrObj = dataPeta.get(normal(psrParam)) || { nama: psrParam, outlet: new Map() };
+        psrAktif = psrObj;
 
         if (!outletParam) {
           tampilView("viewOutlet");
@@ -603,6 +689,8 @@
       halamanProduk++;
       renderProduk();
     });
+    el("btnExportOutlet").addEventListener("click", eksporSemuaOutlet);
+    el("btnExportProduk").addEventListener("click", eksporOutletAktif);
     el("navToggle").addEventListener("click", bukaMenu);
     el("navClose").addEventListener("click", tutupMenu);
     el("navOverlay").addEventListener("click", tutupMenu);
