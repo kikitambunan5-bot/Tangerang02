@@ -110,6 +110,7 @@
       <div class="mb-2 flex flex-wrap gap-2">
         <a id="btnProdukSemua" href="#" class="rounded-full border px-4 py-2 text-xs font-semibold transition">Semua Produk</a>
         <a id="btnProdukLebih" href="#" class="rounded-full border px-4 py-2 text-xs font-semibold transition">Melebihi Estimasi</a>
+        <a id="btnProdukKurang" href="#" class="rounded-full border px-4 py-2 text-xs font-semibold transition">Kurang dari Estimasi</a>
       </div>
       <p id="infoProduk" class="mb-3 text-xs text-slate-500"></p>
 
@@ -167,8 +168,8 @@
     let dataPsr = [];
     let outletAktif = null;
     let halamanProduk = 1;
-    let filterProdukLebih = false;
-    let tautanProduk = { semua: "#", lebih: "#" };
+    let filterProduk = "semua";
+    let tautanProduk = { semua: "#", lebih: "#", kurang: "#" };
 
     /* ---------- Utilitas ---------- */
     function normal(s) {
@@ -191,6 +192,11 @@
     const rp = (n) => "Rp " + Math.round(n).toLocaleString("id-ID");
     const num = (n) => Number(n).toLocaleString("id-ID", { maximumFractionDigits: 2 });
     const siap = (d) => !!d && (d.status === "ok" || d.status === "cache");
+
+    // Sesuai atau melebihi estimasi: Realisasi UB >= Qty ST / bulan UB (produk tanpa realisasi tidak dihitung)
+    const capai = (p) => p.realUb > 0 && p.realUb >= p.qty;
+    // Belum mencapai estimasi: Realisasi UB di bawah Qty ST / bulan UB
+    const kurang = (p) => p.realUb < p.qty;
 
     function tampilPesan(teks, tipe) {
       const p = el("pesan");
@@ -287,7 +293,7 @@
         qty += p.qty;
         estimasi += p.estimasi;
         realUb += p.realUb;
-        if (p.realUb > p.qty) lebih++;
+        if (capai(p)) lebih++;
       }
       return { ...o, produkList, jumlahProduk: produkList.length, realSales, qty, estimasi, realUb, lebih };
     }
@@ -364,7 +370,7 @@
         ? `${tampil.length} dari ${semua.length} outlet`
         : `${semua.length} outlet`;
       el("infoFilter").textContent = hanyaLebih
-        ? "Menampilkan outlet yang minimal memiliki satu produk dengan Realisasi UB lebih besar dari Qty ST / bulan UB."
+        ? "Menampilkan outlet yang minimal memiliki satu produk yang realisasinya sudah sesuai atau melebihi estimasi."
         : "Menampilkan semua outlet. Pilih Produk Melebihi Estimasi untuk menyaring outlet.";
 
       aturTombolFilter(!hanyaLebih, psrObj.nama);
@@ -374,7 +380,7 @@
       if (tampil.length === 0) {
         list.innerHTML = "";
         kosong.textContent = semua.length
-          ? "Tidak ada outlet yang realisasi produknya melebihi estimasi pada periode November 2026."
+          ? "Tidak ada outlet yang realisasi produknya sudah sesuai atau melebihi estimasi pada periode November 2026."
           : "Belum ada outlet untuk periode November 2026.";
         kosong.classList.remove("hidden");
         return;
@@ -413,19 +419,28 @@
       renderProduk();
     }
 
-    function aturFilterProduk(total, lolos) {
+    function aturFilterProduk(total, jumlahLebih, jumlahKurang) {
       const dasar = "rounded-full border px-4 py-2 text-xs font-semibold transition ";
       const on = "border-slate-900 bg-slate-900 text-white";
       const off = "border-slate-200 bg-white text-slate-600 hover:bg-slate-50";
-      const tSemua = el("btnProdukSemua");
-      const tLebih = el("btnProdukLebih");
-      tSemua.className = dasar + (filterProdukLebih ? off : on);
-      tLebih.className = dasar + (filterProdukLebih ? on : off);
-      tSemua.href = tautanProduk.semua;
-      tLebih.href = tautanProduk.lebih;
-      el("infoProduk").textContent = filterProdukLebih
-        ? `Menampilkan ${lolos} dari ${total} produk yang Realisasi UB-nya melebihi Qty ST / bulan UB.`
-        : `${total} produk. Pilih Melebihi Estimasi untuk melihat produk yang sudah melebihi estimasi.`;
+
+      el("btnProdukSemua").className = dasar + (filterProduk === "semua" ? on : off);
+      el("btnProdukLebih").className = dasar + (filterProduk === "lebih" ? on : off);
+      el("btnProdukKurang").className = dasar + (filterProduk === "kurang" ? on : off);
+
+      el("btnProdukSemua").href = tautanProduk.semua;
+      el("btnProdukLebih").href = tautanProduk.lebih;
+      el("btnProdukKurang").href = tautanProduk.kurang;
+
+      let info;
+      if (filterProduk === "lebih") {
+        info = `Menampilkan ${jumlahLebih} dari ${total} produk yang realisasinya sudah sesuai atau melebihi estimasi.`;
+      } else if (filterProduk === "kurang") {
+        info = `Menampilkan ${jumlahKurang} dari ${total} produk yang realisasinya belum mencapai estimasi.`;
+      } else {
+        info = `${total} produk. Pilih Melebihi Estimasi atau Kurang dari Estimasi untuk menyaring produk.`;
+      }
+      el("infoProduk").textContent = info;
     }
 
     function renderProduk() {
@@ -444,14 +459,19 @@
       }
 
       const semuaProduk = outletAktif.produkList.slice().sort(urutProduk);
-      const lolosList = semuaProduk.filter((p) => p.realUb > p.qty);
-      aturFilterProduk(semuaProduk.length, lolosList.length);
+      const daftarLebih = semuaProduk.filter(capai);
+      const daftarKurang = semuaProduk.filter(kurang);
+      aturFilterProduk(semuaProduk.length, daftarLebih.length, daftarKurang.length);
 
-      const daftar = filterProdukLebih ? lolosList : semuaProduk;
+      const daftar = filterProduk === "lebih" ? daftarLebih
+        : filterProduk === "kurang" ? daftarKurang
+        : semuaProduk;
 
       if (daftar.length === 0) {
         list.innerHTML = "";
-        kosong.textContent = "Tidak ada produk pada outlet ini yang Realisasi UB-nya melebihi estimasi pada periode November 2026.";
+        kosong.textContent = filterProduk === "lebih"
+          ? "Belum ada produk pada outlet ini yang realisasinya sudah sesuai atau melebihi estimasi pada periode November 2026."
+          : "Tidak ada produk pada outlet ini yang realisasinya kurang dari estimasi pada periode November 2026.";
         kosong.classList.remove("hidden");
         pager.classList.add("hidden");
         pager.classList.remove("flex");
@@ -466,9 +486,9 @@
       const potong = daftar.slice(awal, awal + PER_HALAMAN);
 
       list.innerHTML = potong.map((p) => {
-        const hijau = p.realUb > p.qty;
+        const hijau = capai(p);
         return `
-        <li class="flex items-center gap-3 rounded-2xl border p-3 ${hijau ? "border-emerald-200 bg-emerald-50" : "border-slate-100 bg-white"}">
+        <li class="${hijau ? "border-emerald-200 bg-emerald-50" : "border-slate-100"} flex items-center gap-3 rounded-2xl border p-3">
           <div class="min-w-0 flex-1">
             <p class="text-sm font-semibold leading-snug text-slate-800">${escHtml(p.nama)}</p>
             <p class="mt-0.5 text-xs text-slate-400">${escHtml(p.kode || "-")}</p>
@@ -501,7 +521,8 @@
       const psrParam = bersih(P.get("psr") || "");
       const outletParam = bersih(P.get("outlet") || "");
       const hanyaLebih = P.get("filter") === "lebih";
-      const produkLebih = P.get("produk") === "lebih";
+      const modeProduk = P.get("produk");
+      filterProduk = modeProduk === "lebih" ? "lebih" : modeProduk === "kurang" ? "kurang" : "semua";
 
       if (!psrParam) {
         tampilView("viewPsr");
@@ -522,75 +543,4 @@
           tampilView("viewDetail");
           const outletObj = cariOutlet(psrObj, outletParam);
           el("judulUtama").textContent = outletObj ? outletObj.nama : outletParam;
-          el("subJudul").textContent = psrObj.nama + " · " + LABEL_PERIODE;
-          const kembaliP = new URLSearchParams({ psr: psrObj.nama });
-          if (hanyaLebih) kembaliP.set("filter", "lebih");
-          setKembali("monitoring-insentif-sc.html?" + kembaliP, "Kembali ke daftar outlet");
-
-          const dasarP = { psr: psrObj.nama, outlet: outletObj ? outletObj.asli : outletParam };
-          tautanProduk = {
-            semua: "monitoring-insentif-sc.html?" + new URLSearchParams(dasarP),
-            lebih: "monitoring-insentif-sc.html?" + new URLSearchParams({ ...dasarP, produk: "lebih" }),
-          };
-          filterProdukLebih = produkLebih;
-
-          if (outletObj) {
-            renderDetail(outletObj);
-          } else {
-            outletAktif = null;
-            renderProduk();
-            const kosong = el("listProdukKosong");
-            kosong.textContent = "Outlet ini tidak ditemukan untuk periode November 2026.";
-            kosong.classList.remove("hidden");
-          }
-        }
-      }
-      if (window.lucide) lucide.createIcons();
-    }
-
-    function render() {
-      const dPsr = SheetData.get(KUNCI_PSR);
-      dataPsr = siap(dPsr) ? ambilNamaPsr(dPsr) : [];
-
-      const dIns = SheetData.get(KUNCI_INSENTIF);
-      if (dIns.status === "kosong") return tampilPesan("Link insentifSc belum diisi di sheet.js.", "error");
-      if (dIns.status === "error") return tampilPesan("Data insentifSc gagal dimuat. Pastikan tab sudah dipublish sebagai CSV.", "error");
-      if (!siap(dIns)) return tampilPesan("Memuat data insentif…");
-      if (!dIns.rows || dIns.rows.length === 0) return tampilPesan("Data insentifSc kosong.", "error");
-
-      tampilPesan("");
-      dataPeta = olahInsentif(dIns);
-      atur();
-    }
-
-    /* ---------- Menu samping ---------- */
-    function bukaMenu() {
-      el("navOverlay").classList.remove("hidden");
-      el("navDrawer").classList.remove("translate-x-full");
-    }
-    function tutupMenu() {
-      el("navOverlay").classList.add("hidden");
-      el("navDrawer").classList.add("translate-x-full");
-    }
-
-    /* ---------- Event ---------- */
-    el("cariPsr").addEventListener("input", renderPsr);
-    el("produkPrev").addEventListener("click", () => {
-      if (halamanProduk > 1) { halamanProduk--; renderProduk(); }
-    });
-    el("produkNext").addEventListener("click", () => {
-      halamanProduk++;
-      renderProduk();
-    });
-    el("navToggle").addEventListener("click", bukaMenu);
-    el("navClose").addEventListener("click", tutupMenu);
-    el("navOverlay").addEventListener("click", tutupMenu);
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") tutupMenu(); });
-
-    SheetData.onUpdate(render);
-    render();
-    if (window.lucide) lucide.createIcons();
-  })();
-  </script>
-</body>
-</html>
+          el("subJudul").textContent = psrObj.nama + " · " 
