@@ -1,531 +1,596 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Monitoring Insentif SC</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-  <script src="sheet.js"></script>
-  <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; }
-  </style>
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
-<body class="min-h-screen bg-[#eef2f8] text-slate-900">
+<body class="min-h-screen bg-slate-50 font-sans text-slate-800 antialiased">
 
   <!-- Header -->
-  <div class="mx-auto w-full max-w-xl px-5 pt-6 pb-4">
-    <div class="flex items-center justify-between">
-      <a id="btnKembali" href="index.html" class="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow" aria-label="Kembali">
-        <i data-lucide="arrow-left" class="h-5 w-5"></i>
-      </a>
-      <div class="text-center">
-        <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Monitoring Insentif SC</p>
-        <p class="text-base font-bold">Monitoring Insentif SC</p>
+  <header class="sticky top-0 z-30 border-b border-slate-100 bg-white/90 backdrop-blur">
+    <div class="mx-auto flex w-full max-w-xl items-center justify-between px-5 py-3">
+      <div>
+        <p class="text-xs font-medium text-slate-400">Tim Tangerang · Rizky Daniel</p>
+        <p class="text-sm font-bold">SFA Sales Monitoring</p>
       </div>
-      <button id="navToggle" class="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow" aria-label="Menu">
+      <button id="navToggle" type="button" aria-label="Menu"
+        class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50">
         <i data-lucide="menu" class="h-5 w-5"></i>
       </button>
     </div>
-  </div>
+  </header>
 
-  <div class="mx-auto w-full max-w-xl px-4 pb-10">
+  <main class="mx-auto w-full max-w-xl px-4 pb-16 pt-6">
 
     <!-- Kartu judul -->
-    <div class="rounded-[28px] bg-[#0b0d12] p-6 text-white shadow-xl">
-      <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Tim Tangerang · ASM Rizky Daniel</p>
-      <h1 id="judulUtama" class="mt-2 text-2xl font-extrabold">Monitoring Insentif SC</h1>
-      <p id="subJudul" class="mt-1 text-sm text-slate-400">Daftar PSR</p>
-    </div>
+    <section class="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+      <a id="btnKembali" href="#" class="mb-3 inline-flex hidden items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-800">
+        <i data-lucide="arrow-left" class="h-4 w-4"></i>
+        <span id="labelKembali">Kembali</span>
+      </a>
+      <h1 id="judulUtama" class="text-lg font-extrabold">Monitoring Insentif SC</h1>
+      <p id="subJudul" class="mt-1 text-sm text-slate-500">Periode November 2026</p>
+      <p id="pesan" class="hidden"></p>
+    </section>
 
-    <!-- Pesan status -->
-    <p id="pesan" class="mt-4 hidden rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800"></p>
-
-    <!-- Tampilan 1: daftar PSR -->
-    <div id="viewPsr" class="mt-4 rounded-[28px] bg-white p-5 shadow">
-      <div class="flex items-center justify-between gap-3">
-        <div>
-          <p class="text-sm font-bold">Daftar PSR</p>
-          <p id="jumlahPsr" class="text-xs text-slate-500">0 PSR</p>
-        </div>
-        <span class="status-badge rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">Memuat</span>
+    <!-- Daftar PSR -->
+    <section id="viewPsr" class="mt-5">
+      <div class="mb-3 flex items-center justify-between gap-3">
+        <h2 class="text-sm font-bold">Daftar PSR</h2>
+        <span id="jumlahPsr" class="text-xs text-slate-400"></span>
       </div>
       <input id="cariPsr" type="search" placeholder="Cari nama PSR..."
-             class="mt-4 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400">
-      <ul id="listPsr" class="mt-4 space-y-1"></ul>
-      <p id="listKosong" class="hidden py-8 text-center text-sm text-slate-500">Tidak ada PSR.</p>
-    </div>
+        class="mb-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400" />
+      <ul id="listPsr" class="space-y-2"></ul>
+      <p id="listKosong" class="hidden rounded-2xl border border-slate-100 bg-white p-4 text-sm text-slate-500"></p>
+    </section>
 
-    <!-- Tampilan 2: daftar outlet per PSR -->
-    <div id="viewOutlet" class="hidden">
-      <div class="mt-4 rounded-[28px] bg-white p-5 shadow">
-        <div class="flex items-center justify-between gap-3">
-          <div>
-            <p class="text-sm font-bold">Ringkasan</p>
-            <p id="jumlahOutlet" class="text-xs text-slate-500">0 outlet</p>
-          </div>
-          <span class="status-badge rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">Memuat</span>
+    <!-- Daftar outlet -->
+    <section id="viewOutlet" class="mt-5 hidden">
+      <div class="mb-3 grid grid-cols-2 gap-3">
+        <div class="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <p class="text-xs text-slate-400">Jumlah outlet</p>
+          <p id="rkJumlah" class="mt-1 text-sm font-bold"></p>
         </div>
-        <div class="mt-4 grid grid-cols-2 gap-3">
-          <div class="rounded-2xl bg-slate-50 p-4">
-            <p class="text-xs text-slate-500">Jumlah outlet</p>
-            <p id="rkJumlah" class="mt-1 text-base font-bold">0</p>
-          </div>
-          <div class="rounded-2xl bg-slate-50 p-4">
-            <p class="text-xs text-slate-500">Total realisasi sales</p>
-            <p id="rkTotal" class="mt-1 text-base font-bold">-</p>
-          </div>
+        <div class="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <p class="text-xs text-slate-400">Total realisasi sales</p>
+          <p id="rkTotal" class="mt-1 text-sm font-bold"></p>
         </div>
       </div>
 
-      <div class="mt-4 rounded-[28px] bg-white p-5 shadow">
-        <p class="text-sm font-bold">Daftar Outlet</p>
-        <p class="text-xs text-slate-500">Periode November 2026, urut dari realisasi sales tertinggi</p>
-        <ul id="listOutlet" class="mt-4 space-y-1"></ul>
-        <p id="listOutletKosong" class="hidden py-8 text-center text-sm text-slate-500">Belum ada outlet untuk periode November 2026.</p>
+      <!-- Filter outlet -->
+      <div class="mb-2 flex flex-wrap gap-2">
+        <a id="btnFilterSemua" href="#" class="rounded-full border px-4 py-2 text-xs font-semibold transition">Semua Outlet</a>
+        <a id="btnFilterLebih" href="#" class="rounded-full border px-4 py-2 text-xs font-semibold transition">Produk Melebihi Estimasi</a>
       </div>
-    </div>
+      <p id="infoFilter" class="mb-4 text-xs text-slate-500"></p>
 
-    <!-- Tampilan 3: detail produk per outlet -->
-    <div id="viewDetail" class="hidden">
-      <div class="mt-4 rounded-[28px] bg-white p-5 shadow">
-        <p class="text-sm font-bold">Ringkasan Outlet</p>
-        <p class="text-xs text-slate-500">Periode November 2026</p>
-        <div class="mt-4 grid grid-cols-2 gap-3">
-          <div class="rounded-2xl bg-slate-50 p-4">
-            <p class="text-xs text-slate-500">Qty ST / bulan UB</p>
-            <p id="tQty" class="mt-1 text-base font-bold">-</p>
-          </div>
-          <div class="rounded-2xl bg-slate-50 p-4">
-            <p class="text-xs text-slate-500">Estimasi sales / bln (Rp)</p>
-            <p id="tEstimasi" class="mt-1 text-base font-bold">-</p>
-          </div>
-          <div class="rounded-2xl bg-slate-50 p-4">
-            <p class="text-xs text-slate-500">Realisasi UB</p>
-            <p id="tRealUb" class="mt-1 text-base font-bold">-</p>
-          </div>
-          <div class="rounded-2xl bg-slate-50 p-4">
-            <p class="text-xs text-slate-500">Realisasi sales</p>
-            <p id="tRealSales" class="mt-1 text-base font-bold">-</p>
-          </div>
+      <div class="mb-3 flex items-center justify-between gap-3">
+        <h2 class="text-sm font-bold">Daftar Outlet</h2>
+        <span id="jumlahOutlet" class="text-xs text-slate-400"></span>
+      </div>
+      <ul id="listOutlet" class="space-y-2"></ul>
+      <p id="listOutletKosong" class="hidden rounded-2xl border border-slate-100 bg-white p-4 text-sm text-slate-500"></p>
+    </section>
+
+    <!-- Detail outlet -->
+    <section id="viewDetail" class="mt-5 hidden">
+      <h2 class="mb-3 text-sm font-bold">Ringkasan Outlet</h2>
+      <div class="mb-5 grid grid-cols-2 gap-3">
+        <div class="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <p class="text-xs text-slate-400">Qty ST / bulan UB</p>
+          <p id="tQty" class="mt-1 text-sm font-bold"></p>
+        </div>
+        <div class="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <p class="text-xs text-slate-400">Estimasi sales / bln (Rp)</p>
+          <p id="tEstimasi" class="mt-1 text-sm font-bold"></p>
+        </div>
+        <div class="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <p class="text-xs text-slate-400">Realisasi UB</p>
+          <p id="tRealUb" class="mt-1 text-sm font-bold"></p>
+        </div>
+        <div class="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <p class="text-xs text-slate-400">Realisasi sales</p>
+          <p id="tRealSales" class="mt-1 text-sm font-bold"></p>
         </div>
       </div>
 
-      <div class="mt-4 rounded-[28px] bg-white p-5 shadow">
-        <p class="text-sm font-bold">Detail Produk</p>
-        <p class="text-xs text-slate-500">Urut dari Qty ST / bulan UB tertinggi, 15 SKU per halaman</p>
+      <h2 class="mb-3 text-sm font-bold">Detail Produk</h2>
 
-        <ul id="listProduk" class="mt-4 space-y-2"></ul>
-        <p id="listProdukKosong" class="hidden py-8 text-center text-sm text-slate-500">Belum ada produk untuk outlet ini pada periode November 2026.</p>
-
-        <div id="pagerProduk" class="mt-4 hidden flex items-center justify-between gap-3">
-          <button id="produkPrev" class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold disabled:opacity-40">‹ Sebelumnya</button>
-          <p id="produkInfo" class="text-center text-xs text-slate-500"></p>
-          <button id="produkNext" class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold disabled:opacity-40">Berikutnya ›</button>
-        </div>
+      <!-- Filter produk -->
+      <div class="mb-2 flex flex-wrap gap-2">
+        <a id="btnProdukSemua" href="#" class="rounded-full border px-4 py-2 text-xs font-semibold transition">Semua Produk</a>
+        <a id="btnProdukLebih" href="#" class="rounded-full border px-4 py-2 text-xs font-semibold transition">Melebihi Estimasi</a>
       </div>
-    </div>
+      <p id="infoProduk" class="mb-3 text-xs text-slate-500"></p>
 
-  </div>
+      <ul id="listProduk" class="space-y-2"></ul>
+      <p id="listProdukKosong" class="hidden rounded-2xl border border-slate-100 bg-white p-4 text-sm text-slate-500"></p>
 
-  <!-- Menu samping (dibuat langsung di halaman, tanpa nav.js) -->
-  <div id="navOverlay" class="fixed inset-0 z-40 hidden bg-black/40"></div>
-  <aside id="navDrawer" class="fixed right-0 top-0 z-50 h-full w-72 translate-x-full bg-white p-5 shadow-2xl transition-transform duration-300">
-    <div class="mb-6 flex items-center justify-between">
-      <p class="font-bold">Menu</p>
-      <button id="navClose" class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100" aria-label="Tutup">
-        <i data-lucide="x" class="h-4 w-4"></i>
+      <div id="pagerProduk" class="mt-4 hidden items-center justify-between gap-2">
+        <button id="produkPrev" type="button"
+          class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-40">‹ Sebelumnya</button>
+        <p id="produkInfo" class="text-center text-xs text-slate-500"></p>
+        <button id="produkNext" type="button"
+          class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-40">Berikutnya ›</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Menu samping -->
+  <div id="navOverlay" class="fixed inset-0 z-40 hidden bg-slate-900/40"></div>
+  <aside id="navDrawer" class="fixed right-0 top-0 z-50 h-full w-72 translate-x-full bg-white shadow-xl transition-transform duration-300">
+    <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+      <p class="text-sm font-bold">Menu</p>
+      <button id="navClose" type="button" aria-label="Tutup menu"
+        class="flex h-9 w-9 items-center justify-center rounded-xl hover:bg-slate-100">
+        <i data-lucide="x" class="h-5 w-5"></i>
       </button>
     </div>
-    <nav class="space-y-2">
-      <a href="monitoring-kunjungan.html" class="block rounded-xl px-4 py-3 text-sm font-semibold hover:bg-slate-100">Monitoring Kunjungan</a>
-      <a href="data-tim-sales.html" class="block rounded-xl px-4 py-3 text-sm font-semibold hover:bg-slate-100">Data Tim Sales</a>
-      <a href="monitoring-insentif-sc.html" class="block rounded-xl px-4 py-3 text-sm font-semibold hover:bg-slate-100">Monitoring Insentif SC</a>
+    <nav class="space-y-1 p-3">
+      <a href="monitoring-kunjungan.html" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+        <i data-lucide="map-pin" class="h-4 w-4"></i> Monitoring Kunjungan
+      </a>
+      <a href="data-tim-sales.html" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+        <i data-lucide="users" class="h-4 w-4"></i> Data Tim Sales
+      </a>
+      <a href="monitoring-insentif-sc.html" class="flex items-center gap-3 rounded-xl bg-slate-100 px-3 py-3 text-sm font-semibold text-slate-900">
+        <i data-lucide="wallet" class="h-4 w-4"></i> Monitoring Insentif SC
+      </a>
     </nav>
   </aside>
 
+  <script src="sheet.js"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script>
-    const el = id => document.getElementById(id);
-
+  (function () {
     const KUNCI_PSR = "resumeGt";
     const KUNCI_INSENTIF = "insentifSc";
     const PERIODE = "202611";
     const LABEL_PERIODE = "November 2026";
     const PER_HALAMAN = 15;
+    const K = { psr: 1, kode: 2, outlet: 3, produk: 5, periode: 6, qty: 7, estimasi: 8, realUb: 9, realSales: 10 };
 
-    const params = new URLSearchParams(location.search);
-    const psrPilih = (params.get("psr") || "").trim();
-    const outletPilih = (params.get("outlet") || "").trim();
+    const el = (id) => document.getElementById(id);
 
-    // Posisi kolom di tab insentifSc (mulai dari 0 = kolom A)
-    const K = {
-      psr: 1,        // B  NAMA PSR
-      kode: 2,       // C  kode outlet
-      outlet: 3,     // D  NAMA OUTLET
-      produk: 5,     // F  produk
-      periode: 6,    // G  periode
-      qty: 7,        // H  Qty ST / bulan UB
-      estimasi: 8,   // I  Estimasi sales / bln (Rp)
-      realUb: 9,     // J  Realisasi UB
-      realSales: 10  // K  Realisasi sales
-    };
-
-    const LABEL_STATUS = {
-      memuat: "Memuat",
-      ok: "Terhubung",
-      cache: "Terhubung",
-      kosong: "Belum terhubung",
-      error: "Gagal"
-    };
-
-    let semuaNama = [];
-    let outletDetail = null;
+    let dataPeta = new Map();
+    let dataPsr = [];
+    let outletAktif = null;
     let halamanProduk = 1;
+    let filterProdukLebih = false;
+    let tautanProduk = { semua: "#", lebih: "#" };
 
-    function siap() {
-      return typeof SheetData !== "undefined" && typeof SheetData.get === "function";
-    }
-
-    function escHtml(s) {
-      return String(s ?? "").replace(/[&<>"']/g, c => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-      }[c]));
-    }
-
+    /* ---------- Utilitas ---------- */
     function normal(s) {
       return String(s ?? "").normalize("NFKC").replace(/\s+/g, " ").trim().toLocaleUpperCase("id-ID");
     }
-
-    function bersih(s) {
-      return String(s ?? "").replace(/\s+/g, " ").trim();
+    function bersih(v) {
+      return String(v ?? "").replace(/\s+/g, " ").trim();
     }
-
+    function escHtml(s) {
+      return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
     function toNum(v) {
       let s = String(v ?? "").replace(/Rp/gi, "").replace(/\s/g, "");
-      if (s === "" || s === "-") return 0;
-      if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g, "").replace(",", ".");
-      else if (/^-?\d+,\d+$/.test(s)) s = s.replace(",", ".");
-      else s = s.replace(/,/g, "");
+      if (!s) return 0;
+      if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+      else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
       const n = parseFloat(s);
       return isNaN(n) ? 0 : n;
     }
+    const rp = (n) => "Rp " + Math.round(n).toLocaleString("id-ID");
+    const num = (n) => Number(n).toLocaleString("id-ID", { maximumFractionDigits: 2 });
+    const siap = (d) => !!d && (d.status === "ok" || d.status === "cache");
 
-    function rp(n) {
-      return "Rp " + Math.round(n).toLocaleString("id-ID");
-    }
-
-    function num(n) {
-      return Number(n).toLocaleString("id-ID", { maximumFractionDigits: 2 });
-    }
-
-    function setBadge(status) {
-      document.querySelectorAll(".status-badge").forEach(b => {
-        b.textContent = LABEL_STATUS[status] || status;
-      });
-    }
-
-    function tampilPesan(teks) {
+    function tampilPesan(teks, tipe) {
       const p = el("pesan");
-      p.textContent = teks || "";
-      p.classList.toggle("hidden", !teks);
+      if (!teks) {
+        p.className = "hidden";
+        p.textContent = "";
+        return;
+      }
+      p.className = "mt-4 rounded-xl px-4 py-3 text-sm " +
+        (tipe === "error" ? "border border-rose-100 bg-rose-50 text-rose-700" : "bg-slate-100 text-slate-600");
+      p.textContent = teks;
     }
 
-    // Menu samping
-    function bukaMenu() {
-      el("navDrawer").classList.remove("translate-x-full");
-      el("navOverlay").classList.remove("hidden");
+    function tampilView(nama) {
+      ["viewPsr", "viewOutlet", "viewDetail"].forEach((v) => el(v).classList.toggle("hidden", v !== nama));
     }
 
-    function tutupMenu() {
-      el("navDrawer").classList.add("translate-x-full");
-      el("navOverlay").classList.add("hidden");
+    function setKembali(href, label) {
+      const a = el("btnKembali");
+      if (!href) {
+        a.classList.add("hidden");
+        return;
+      }
+      a.href = href;
+      el("labelKembali").textContent = label;
+      a.classList.remove("hidden");
     }
 
-    // Daftar nama PSR unik dari tab resumeGt
+    /* ---------- Olah data ---------- */
     function ambilNamaPsr(d) {
-      const header = d.header || [];
-      let kolom = header.find(h => normal(h) === "NAMA PSR");
-      if (!kolom) kolom = header.find(h => normal(h).includes("PSR"));
-      if (!kolom) return [];
-
       const hasil = [];
       const sudah = new Set();
-      for (const baris of d.objects || []) {
-        const nama = String(baris[kolom] ?? "").trim();
-        if (!nama) continue;
-        const n = normal(nama);
-        if (n.startsWith("TOTAL") || n.startsWith("JUMLAH")) continue;
-        if (sudah.has(n)) continue;
-        sudah.add(n);
+      for (const o of d.objects || []) {
+        const kunci = Object.keys(o).find((k) => normal(k) === "NAMA PSR");
+        const nama = bersih(kunci ? o[kunci] : "");
+        if (!nama || /\b(TOTAL|JUMLAH)\b/i.test(nama)) continue;
+        const k = normal(nama);
+        if (sudah.has(k)) continue;
+        sudah.add(k);
         hasil.push(nama);
       }
       return hasil;
     }
 
-    // Mengelompokkan data periode 202611: PSR > outlet > produk.
-    // Nilai produk diambil langsung dari baris periode 202611 (tidak dijumlahkan).
-    // Jika ada baris ganda untuk produk yang sama, yang dipakai baris pertama.
     function olahInsentif(d) {
       const peta = new Map();
-      let psrAktif = "";
-      let outletAktif = "";
+      let psrAkhir = "", kodeAkhir = "", outletAkhir = "";
 
-      for (const raw of d.rows || []) {
-        const r = (raw || []).map(bersih);
-        const psr = r[K.psr] || "";
-        const outlet = r[K.outlet] || "";
-        const periode = (r[K.periode] || "").replace(/\.0+$/, "");
+      for (const r of d.rows) {
+        const awal = r.slice(0, 6).map(bersih).join(" ").toUpperCase();
+        if (/\b(TOTAL|JUMLAH|GRAND)\b/.test(awal)) continue;
 
-        // Baris total dilewati
-        if (/^(GRAND )?(TOTAL|JUMLAH)/.test(normal(psr))) {
-          psrAktif = "";
-          outletAktif = "";
-          continue;
+        const psrRaw = bersih(r[K.psr]);
+        if (psrRaw) psrAkhir = psrRaw;
+        const kodeRaw = bersih(r[K.kode]);
+        if (kodeRaw) kodeAkhir = kodeRaw;
+        const outletRaw = bersih(r[K.outlet]);
+        if (outletRaw) outletAkhir = outletRaw;
+
+        if (bersih(r[K.periode]) !== PERIODE) continue;
+        const produkNama = bersih(r[K.produk]);
+        if (!psrAkhir || !outletAkhir || !produkNama) continue;
+
+        const kunciPsr = normal(psrAkhir);
+        if (!peta.has(kunciPsr)) peta.set(kunciPsr, { nama: psrAkhir, outlet: new Map() });
+        const psrObj = peta.get(kunciPsr);
+
+        const asli = kodeAkhir || outletAkhir;
+        const kunciOutlet = normal(asli);
+        if (!psrObj.outlet.has(kunciOutlet)) {
+          psrObj.outlet.set(kunciOutlet, { kode: kodeAkhir, nama: outletAkhir, asli, produk: new Map() });
         }
+        const outletObj = psrObj.outlet.get(kunciOutlet);
 
-        // Sel PSR/outlet yang digabung: nilai kosong mengikuti baris di atasnya
-        if (psr && normal(psr) !== normal(psrAktif)) {
-          psrAktif = psr;
-          outletAktif = "";
-        }
-        if (outlet) outletAktif = outlet;
-
-        if (!psrAktif || !outletAktif) continue;
-        if (periode !== PERIODE) continue;
-
-        const produk = r[K.produk] || "(tanpa nama produk)";
-
-        const kPsr = normal(psrAktif);
-        if (!peta.has(kPsr)) peta.set(kPsr, { nama: psrAktif, outlet: new Map() });
-        const psrObj = peta.get(kPsr);
-
-        const kOutlet = normal(outletAktif);
-        if (!psrObj.outlet.has(kOutlet)) psrObj.outlet.set(kOutlet, { nama: outletAktif, produk: new Map() });
-        const outletObj = psrObj.outlet.get(kOutlet);
-
-        const kProduk = normal(produk);
-        if (outletObj.produk.has(kProduk)) continue; // baris ganda: pakai yang pertama
-
-        outletObj.produk.set(kProduk, {
-          nama: produk,
+        const kunciProduk = normal(produkNama);
+        if (outletObj.produk.has(kunciProduk)) continue;
+        outletObj.produk.set(kunciProduk, {
+          nama: produkNama,
+          kode: bersih(r[4]),
           qty: toNum(r[K.qty]),
           estimasi: toNum(r[K.estimasi]),
           realUb: toNum(r[K.realUb]),
-          realSales: toNum(r[K.realSales])
+          realSales: toNum(r[K.realSales]),
         });
       }
       return peta;
     }
 
-    // Ringkasan outlet: total dari nilai produk yang sudah terpilih
     function ringkasOutlet(o) {
-      const t = { qty: 0, estimasi: 0, realUb: 0, realSales: 0 };
-      o.produk.forEach(p => {
-        t.qty += p.qty;
-        t.estimasi += p.estimasi;
-        t.realUb += p.realUb;
-        t.realSales += p.realSales;
-      });
-      return t;
-    }
-
-    function tampilDaftarPsr() {
-      const q = normal(el("cariPsr").value);
-      const hasil = semuaNama.filter(n => normal(n).includes(q));
-
-      el("jumlahPsr").textContent = hasil.length + " PSR";
-      el("listPsr").innerHTML = hasil.map((n, i) => `
-        <li>
-          <a href="monitoring-insentif-sc.html?psr=${encodeURIComponent(n)}" class="flex items-center gap-3 rounded-2xl px-3 py-3 hover:bg-slate-50">
-            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">${i + 1}</span>
-            <span class="flex-1 text-sm font-semibold">${escHtml(n)}</span>
-            <span class="text-lg text-slate-400">›</span>
-          </a>
-        </li>`).join("");
-      el("listKosong").classList.toggle("hidden", hasil.length > 0);
-    }
-
-    function renderPsr() {
-      const d = SheetData.get(KUNCI_PSR);
-      setBadge(d.status);
-
-      let teks = "";
-      if (d.status === "kosong") teks = "Link resumeGt belum diisi di sheet.js.";
-      else if (d.status === "error") teks = "Data resumeGt gagal dimuat. Pastikan tab sudah dipublish sebagai CSV.";
-
-      semuaNama = (d.status === "ok" || d.status === "cache") ? ambilNamaPsr(d) : [];
-      tampilPesan(teks);
-      tampilDaftarPsr();
-    }
-
-    function renderOutlet(psrObj) {
-      el("judulUtama").textContent = psrPilih;
-      el("subJudul").textContent = "Periode " + LABEL_PERIODE;
-      el("btnKembali").href = "monitoring-insentif-sc.html";
-
-      const daftar = psrObj
-        ? [...psrObj.outlet.values()].map(o => ({ nama: o.nama, ...ringkasOutlet(o) }))
-        : [];
-      daftar.sort((a, b) => b.realSales - a.realSales || b.qty - a.qty || a.nama.localeCompare(b.nama, "id"));
-
-      const totalSales = daftar.reduce((s, o) => s + o.realSales, 0);
-
-      el("listOutlet").innerHTML = daftar.map((o, i) => `
-        <li>
-          <a href="monitoring-insentif-sc.html?psr=${encodeURIComponent(psrPilih)}&outlet=${encodeURIComponent(o.nama)}" class="flex items-center gap-3 rounded-2xl px-3 py-3 hover:bg-slate-50">
-            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">${i + 1}</span>
-            <span class="flex-1 text-sm font-semibold">${escHtml(o.nama)}</span>
-            <span class="whitespace-nowrap text-sm font-bold text-slate-700">${rp(o.realSales)}</span>
-            <span class="text-lg text-slate-400">›</span>
-          </a>
-        </li>`).join("");
-
-      el("jumlahOutlet").textContent = daftar.length + " outlet";
-      el("rkJumlah").textContent = daftar.length;
-      el("rkTotal").textContent = rp(totalSales);
-      el("listOutletKosong").classList.toggle("hidden", daftar.length > 0);
-    }
-
-    // 15 SKU per halaman, detail angka di sebelah kanan setiap produk.
-    // Kartu hijau jika Realisasi UB lebih besar dari Qty ST / bulan UB.
-    function renderProduk() {
-      const produk = outletDetail
-        ? [...outletDetail.produk.values()].sort((a, b) =>
-            b.qty - a.qty || b.realSales - a.realSales || a.nama.localeCompare(b.nama, "id"))
-        : [];
-
-      const total = produk.length;
-      const jumlahHal = Math.max(1, Math.ceil(total / PER_HALAMAN));
-      halamanProduk = Math.min(Math.max(1, halamanProduk), jumlahHal);
-
-      const mulai = (halamanProduk - 1) * PER_HALAMAN;
-      const potong = produk.slice(mulai, mulai + PER_HALAMAN);
-
-      el("listProduk").innerHTML = potong.map((p, i) => `
-        <li class="${p.realUb > p.qty ? 'border-emerald-200 bg-emerald-50' : 'border-slate-100'} flex items-center gap-3 rounded-2xl border p-3">
-          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">${mulai + i + 1}</span>
-          <p class="min-w-0 flex-1 text-sm font-bold leading-snug break-words">${escHtml(p.nama)}</p>
-          <div class="grid w-[55%] shrink-0 grid-cols-2 gap-x-3 gap-y-2">
-            <div>
-              <p class="text-[10px] text-slate-500">Qty ST / bln UB</p>
-              <p class="text-xs font-bold">${num(p.qty)}</p>
-            </div>
-            <div>
-              <p class="text-[10px] text-slate-500">Estimasi sales / bln</p>
-              <p class="text-xs font-bold">${rp(p.estimasi)}</p>
-            </div>
-            <div>
-              <p class="text-[10px] text-slate-500">Realisasi UB</p>
-              <p class="text-xs font-bold">${num(p.realUb)}</p>
-            </div>
-            <div>
-              <p class="text-[10px] text-slate-500">Realisasi sales</p>
-              <p class="text-xs font-bold">${rp(p.realSales)}</p>
-            </div>
-          </div>
-        </li>`).join("");
-
-      el("listProdukKosong").classList.toggle("hidden", total > 0);
-      el("pagerProduk").classList.toggle("hidden", total === 0);
-      el("produkInfo").textContent = total
-        ? `Halaman ${halamanProduk} dari ${jumlahHal} · SKU ${mulai + 1}–${mulai + potong.length} dari ${total}`
-        : "";
-      el("produkPrev").disabled = halamanProduk <= 1;
-      el("produkNext").disabled = halamanProduk >= jumlahHal;
-    }
-
-    function renderDetail(outletObj) {
-      el("judulUtama").textContent = outletObj ? outletObj.nama : outletPilih;
-      el("subJudul").textContent = psrPilih + " · " + LABEL_PERIODE;
-      el("btnKembali").href = "monitoring-insentif-sc.html?psr=" + encodeURIComponent(psrPilih);
-
-      outletDetail = outletObj || null;
-
-      if (!outletObj) {
-        el("tQty").textContent = "-";
-        el("tEstimasi").textContent = "-";
-        el("tRealUb").textContent = "-";
-        el("tRealSales").textContent = "-";
-      } else {
-        const t = ringkasOutlet(outletObj);
-        el("tQty").textContent = num(t.qty);
-        el("tEstimasi").textContent = rp(t.estimasi);
-        el("tRealUb").textContent = num(t.realUb);
-        el("tRealSales").textContent = rp(t.realSales);
+      const produkList = Array.from(o.produk.values());
+      let realSales = 0, qty = 0, estimasi = 0, realUb = 0, lebih = 0;
+      for (const p of produkList) {
+        realSales += p.realSales;
+        qty += p.qty;
+        estimasi += p.estimasi;
+        realUb += p.realUb;
+        if (p.realUb > p.qty) lebih++;
       }
+      return { ...o, produkList, jumlahProduk: produkList.length, realSales, qty, estimasi, realUb, lebih };
+    }
 
+    const urutOutlet = (a, b) =>
+      b.realSales - a.realSales || b.qty - a.qty || a.nama.localeCompare(b.nama, "id");
+
+    const urutProduk = (a, b) =>
+      b.qty - a.qty || b.realSales - a.realSales || a.nama.localeCompare(b.nama, "id");
+
+    function cariOutlet(psrObj, param) {
+      const k = normal(param);
+      const langsung = psrObj.outlet.get(k);
+      if (langsung) return langsung;
+      for (const v of psrObj.outlet.values()) {
+        if (normal(v.nama) === k) return v;
+      }
+      return null;
+    }
+
+    /* ---------- Render: daftar PSR ---------- */
+    function renderPsr() {
+      const kata = normal(el("cariPsr").value);
+      const hasil = dataPsr.filter((n) => normal(n).includes(kata));
+      el("jumlahPsr").textContent = hasil.length + " PSR";
+
+      const list = el("listPsr");
+      const kosong = el("listKosong");
+      if (hasil.length === 0) {
+        list.innerHTML = "";
+        kosong.textContent = dataPsr.length ? "PSR tidak ditemukan." : "Daftar PSR belum termuat.";
+        kosong.classList.remove("hidden");
+        return;
+      }
+      kosong.classList.add("hidden");
+
+      list.innerHTML = hasil.map((n) => {
+        const psrObj = dataPeta.get(normal(n));
+        const jumlah = psrObj ? psrObj.outlet.size : 0;
+        const href = "monitoring-insentif-sc.html?" + new URLSearchParams({ psr: n });
+        return `
+        <li>
+          <a href="${href}" class="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:shadow">
+            <p class="min-w-0 truncate text-sm font-semibold text-slate-800">${escHtml(n)}</p>
+            <div class="shrink-0 text-right">
+              <p class="text-xs text-slate-400">Outlet</p>
+              <p class="text-sm font-bold">${jumlah}</p>
+            </div>
+          </a>
+        </li>`;
+      }).join("");
+    }
+
+    /* ---------- Render: daftar outlet + filter outlet ---------- */
+    function aturTombolFilter(aktif, namaPsr) {
+      const dasar = "rounded-full border px-4 py-2 text-xs font-semibold transition ";
+      const on = "border-slate-900 bg-slate-900 text-white";
+      const off = "border-slate-200 bg-white text-slate-600 hover:bg-slate-50";
+      const tSemua = el("btnFilterSemua");
+      const tLebih = el("btnFilterLebih");
+      tSemua.className = dasar + (aktif ? off : on);
+      tLebih.className = dasar + (aktif ? on : off);
+      tSemua.href = "monitoring-insentif-sc.html?" + new URLSearchParams({ psr: namaPsr });
+      tLebih.href = "monitoring-insentif-sc.html?" + new URLSearchParams({ psr: namaPsr, filter: "lebih" });
+    }
+
+    function renderOutlet(psrObj, hanyaLebih) {
+      const semua = Array.from(psrObj.outlet.values()).map(ringkasOutlet).sort(urutOutlet);
+      const tampil = hanyaLebih ? semua.filter((o) => o.lebih > 0) : semua;
+
+      el("rkJumlah").textContent = semua.length + " outlet";
+      el("rkTotal").textContent = rp(semua.reduce((s, o) => s + o.realSales, 0));
+      el("jumlahOutlet").textContent = hanyaLebih
+        ? `${tampil.length} dari ${semua.length} outlet`
+        : `${semua.length} outlet`;
+      el("infoFilter").textContent = hanyaLebih
+        ? "Menampilkan outlet yang minimal memiliki satu produk dengan Realisasi UB lebih besar dari Qty ST / bulan UB."
+        : "Menampilkan semua outlet. Pilih Produk Melebihi Estimasi untuk menyaring outlet.";
+
+      aturTombolFilter(!hanyaLebih, psrObj.nama);
+
+      const list = el("listOutlet");
+      const kosong = el("listOutletKosong");
+      if (tampil.length === 0) {
+        list.innerHTML = "";
+        kosong.textContent = semua.length
+          ? "Tidak ada outlet yang realisasi produknya melebihi estimasi pada periode November 2026."
+          : "Belum ada outlet untuk periode November 2026.";
+        kosong.classList.remove("hidden");
+        return;
+      }
+      kosong.classList.add("hidden");
+
+      list.innerHTML = tampil.map((o) => {
+        const href = "monitoring-insentif-sc.html?" + new URLSearchParams({ psr: psrObj.nama, outlet: o.asli });
+        const badge = o.lebih > 0
+          ? `<span class="mt-2 inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">${o.lebih} produk melebihi estimasi</span>`
+          : "";
+        return `
+        <li>
+          <a href="${href}" class="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:shadow">
+            <div class="min-w-0">
+              <p class="truncate text-sm font-semibold text-slate-800">${escHtml(o.nama)}</p>
+              <p class="mt-0.5 text-xs text-slate-400">${escHtml(o.kode || "-")} · ${o.jumlahProduk} produk</p>
+              ${badge}
+            </div>
+            <div class="shrink-0 text-right">
+              <p class="text-xs text-slate-400">Realisasi sales</p>
+              <p class="whitespace-nowrap text-sm font-bold text-slate-800">${rp(o.realSales)}</p>
+            </div>
+          </a>
+        </li>`;
+      }).join("");
+    }
+
+    /* ---------- Render: detail outlet ---------- */
+    function renderDetail(o) {
+      outletAktif = ringkasOutlet(o);
+      el("tQty").textContent = num(outletAktif.qty);
+      el("tEstimasi").textContent = rp(outletAktif.estimasi);
+      el("tRealUb").textContent = num(outletAktif.realUb);
+      el("tRealSales").textContent = rp(outletAktif.realSales);
       renderProduk();
     }
 
-    function renderInsentif() {
-      const d = SheetData.get(KUNCI_INSENTIF);
-      setBadge(d.status);
+    function aturFilterProduk(total, lolos) {
+      const dasar = "rounded-full border px-4 py-2 text-xs font-semibold transition ";
+      const on = "border-slate-900 bg-slate-900 text-white";
+      const off = "border-slate-200 bg-white text-slate-600 hover:bg-slate-50";
+      const tSemua = el("btnProdukSemua");
+      const tLebih = el("btnProdukLebih");
+      tSemua.className = dasar + (filterProdukLebih ? off : on);
+      tLebih.className = dasar + (filterProdukLebih ? on : off);
+      tSemua.href = tautanProduk.semua;
+      tLebih.href = tautanProduk.lebih;
+      el("infoProduk").textContent = filterProdukLebih
+        ? `Menampilkan ${lolos} dari ${total} produk yang Realisasi UB-nya melebihi Qty ST / bulan UB.`
+        : `${total} produk. Pilih Melebihi Estimasi untuk melihat produk yang sudah melebihi estimasi.`;
+    }
 
-      if (d.status === "kosong") {
-        tampilPesan("Link insentifSc belum diisi di sheet.js.");
+    function renderProduk() {
+      const list = el("listProduk");
+      const kosong = el("listProdukKosong");
+      const pager = el("pagerProduk");
+
+      if (!outletAktif || outletAktif.produkList.length === 0) {
+        list.innerHTML = "";
+        el("infoProduk").textContent = "";
+        kosong.textContent = "Belum ada produk untuk outlet ini pada periode November 2026.";
+        kosong.classList.remove("hidden");
+        pager.classList.add("hidden");
+        pager.classList.remove("flex");
         return;
       }
-      if (d.status === "error") {
-        tampilPesan("Data insentifSc gagal dimuat. Pastikan tab sudah dipublish sebagai CSV.");
+
+      const semuaProduk = outletAktif.produkList.slice().sort(urutProduk);
+      const lolosList = semuaProduk.filter((p) => p.realUb > p.qty);
+      aturFilterProduk(semuaProduk.length, lolosList.length);
+
+      const daftar = filterProdukLebih ? lolosList : semuaProduk;
+
+      if (daftar.length === 0) {
+        list.innerHTML = "";
+        kosong.textContent = "Tidak ada produk pada outlet ini yang Realisasi UB-nya melebihi estimasi pada periode November 2026.";
+        kosong.classList.remove("hidden");
+        pager.classList.add("hidden");
+        pager.classList.remove("flex");
         return;
       }
-      if (d.status !== "ok" && d.status !== "cache") return;
+      kosong.classList.add("hidden");
 
-      const peta = olahInsentif(d);
-      tampilPesan((d.rows || []).length === 0 ? "Data insentifSc kosong." : "");
+      const total = daftar.length;
+      const jumlahHal = Math.max(1, Math.ceil(total / PER_HALAMAN));
+      if (halamanProduk > jumlahHal) halamanProduk = jumlahHal;
+      const awal = (halamanProduk - 1) * PER_HALAMAN;
+      const potong = daftar.slice(awal, awal + PER_HALAMAN);
 
-      const psrObj = peta.get(normal(psrPilih));
-      if (outletPilih) {
-        const outletObj = psrObj && psrObj.outlet.get(normal(outletPilih));
-        renderDetail(outletObj);
+      list.innerHTML = potong.map((p) => {
+        const hijau = p.realUb > p.qty;
+        return `
+        <li class="flex items-center gap-3 rounded-2xl border p-3 ${hijau ? "border-emerald-200 bg-emerald-50" : "border-slate-100 bg-white"}">
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-semibold leading-snug text-slate-800">${escHtml(p.nama)}</p>
+            <p class="mt-0.5 text-xs text-slate-400">${escHtml(p.kode || "-")}</p>
+          </div>
+          <div class="shrink-0 space-y-1 text-right text-xs">
+            <div class="flex justify-end gap-2"><span class="text-slate-400">Qty ST / bulan UB</span><span class="w-12 font-semibold">${num(p.qty)}</span></div>
+            <div class="flex justify-end gap-2"><span class="text-slate-400">Estimasi (Rp)</span><span class="whitespace-nowrap font-semibold">${rp(p.estimasi)}</span></div>
+            <div class="flex justify-end gap-2"><span class="text-slate-400">Realisasi UB</span><span class="w-12 font-semibold">${num(p.realUb)}</span></div>
+            <div class="flex justify-end gap-2"><span class="text-slate-400">Realisasi sales</span><span class="whitespace-nowrap font-semibold">${rp(p.realSales)}</span></div>
+          </div>
+        </li>`;
+      }).join("");
+
+      if (jumlahHal > 1) {
+        pager.classList.remove("hidden");
+        pager.classList.add("flex");
+        el("produkInfo").textContent =
+          `Halaman ${halamanProduk} dari ${jumlahHal} · SKU ${awal + 1}–${awal + potong.length} dari ${total}`;
+        el("produkPrev").disabled = halamanProduk <= 1;
+        el("produkNext").disabled = halamanProduk >= jumlahHal;
       } else {
-        renderOutlet(psrObj);
+        pager.classList.add("hidden");
+        pager.classList.remove("flex");
       }
     }
 
+    /* ---------- Penentu tampilan ---------- */
     function atur() {
-      el("viewPsr").classList.toggle("hidden", !!psrPilih);
-      el("viewOutlet").classList.toggle("hidden", !psrPilih || !!outletPilih);
-      el("viewDetail").classList.toggle("hidden", !(psrPilih && outletPilih));
+      const P = new URLSearchParams(location.search);
+      const psrParam = bersih(P.get("psr") || "");
+      const outletParam = bersih(P.get("outlet") || "");
+      const hanyaLebih = P.get("filter") === "lebih";
+      const produkLebih = P.get("produk") === "lebih";
+
+      if (!psrParam) {
+        tampilView("viewPsr");
+        el("judulUtama").textContent = "Monitoring Insentif SC";
+        el("subJudul").textContent = "Pilih PSR untuk melihat outlet · " + LABEL_PERIODE;
+        setKembali(null);
+        renderPsr();
+      } else {
+        const psrObj = dataPeta.get(normal(psrParam)) || { nama: psrParam, outlet: new Map() };
+
+        if (!outletParam) {
+          tampilView("viewOutlet");
+          el("judulUtama").textContent = psrObj.nama;
+          el("subJudul").textContent = "Daftar outlet · " + LABEL_PERIODE + ", urut dari realisasi sales tertinggi";
+          setKembali("monitoring-insentif-sc.html", "Kembali ke daftar PSR");
+          renderOutlet(psrObj, hanyaLebih);
+        } else {
+          tampilView("viewDetail");
+          const outletObj = cariOutlet(psrObj, outletParam);
+          el("judulUtama").textContent = outletObj ? outletObj.nama : outletParam;
+          el("subJudul").textContent = psrObj.nama + " · " + LABEL_PERIODE;
+          const kembaliP = new URLSearchParams({ psr: psrObj.nama });
+          if (hanyaLebih) kembaliP.set("filter", "lebih");
+          setKembali("monitoring-insentif-sc.html?" + kembaliP, "Kembali ke daftar outlet");
+
+          const dasarP = { psr: psrObj.nama, outlet: outletObj ? outletObj.asli : outletParam };
+          tautanProduk = {
+            semua: "monitoring-insentif-sc.html?" + new URLSearchParams(dasarP),
+            lebih: "monitoring-insentif-sc.html?" + new URLSearchParams({ ...dasarP, produk: "lebih" }),
+          };
+          filterProdukLebih = produkLebih;
+
+          if (outletObj) {
+            renderDetail(outletObj);
+          } else {
+            outletAktif = null;
+            renderProduk();
+            const kosong = el("listProdukKosong");
+            kosong.textContent = "Outlet ini tidak ditemukan untuk periode November 2026.";
+            kosong.classList.remove("hidden");
+          }
+        }
+      }
+      if (window.lucide) lucide.createIcons();
     }
 
     function render() {
-      if (!siap()) {
-        setBadge("error");
-        tampilPesan("sheet.js belum termuat dengan benar. Periksa error sintaks di sheet.js.");
-        return;
-      }
+      const dPsr = SheetData.get(KUNCI_PSR);
+      dataPsr = siap(dPsr) ? ambilNamaPsr(dPsr) : [];
+
+      const dIns = SheetData.get(KUNCI_INSENTIF);
+      if (dIns.status === "kosong") return tampilPesan("Link insentifSc belum diisi di sheet.js.", "error");
+      if (dIns.status === "error") return tampilPesan("Data insentifSc gagal dimuat. Pastikan tab sudah dipublish sebagai CSV.", "error");
+      if (!siap(dIns)) return tampilPesan("Memuat data insentif…");
+      if (!dIns.rows || dIns.rows.length === 0) return tampilPesan("Data insentifSc kosong.", "error");
+
+      tampilPesan("");
+      dataPeta = olahInsentif(dIns);
       atur();
-      if (psrPilih) renderInsentif();
-      else renderPsr();
     }
 
-    // Event menu
-    el("navToggle").addEventListener("click", bukaMenu);
-    el("navClose").addEventListener("click", tutupMenu);
-    el("navOverlay").addEventListener("click", tutupMenu);
-    document.addEventListener("keydown", e => { if (e.key === "Escape") tutupMenu(); });
+    /* ---------- Menu samping ---------- */
+    function bukaMenu() {
+      el("navOverlay").classList.remove("hidden");
+      el("navDrawer").classList.remove("translate-x-full");
+    }
+    function tutupMenu() {
+      el("navOverlay").classList.add("hidden");
+      el("navDrawer").classList.add("translate-x-full");
+    }
 
-    el("cariPsr").addEventListener("input", tampilDaftarPsr);
-
+    /* ---------- Event ---------- */
+    el("cariPsr").addEventListener("input", renderPsr);
     el("produkPrev").addEventListener("click", () => {
-      if (halamanProduk > 1) {
-        halamanProduk--;
-        renderProduk();
-        el("viewDetail").scrollIntoView({ behavior: "smooth", block: "start" });
-      }
+      if (halamanProduk > 1) { halamanProduk--; renderProduk(); }
     });
     el("produkNext").addEventListener("click", () => {
       halamanProduk++;
       renderProduk();
-      el("viewDetail").scrollIntoView({ behavior: "smooth", block: "start" });
     });
+    el("navToggle").addEventListener("click", bukaMenu);
+    el("navClose").addEventListener("click", tutupMenu);
+    el("navOverlay").addEventListener("click", tutupMenu);
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") tutupMenu(); });
 
-    if (siap() && typeof SheetData.onUpdate === "function") SheetData.onUpdate(render);
+    SheetData.onUpdate(render);
     render();
     if (window.lucide) lucide.createIcons();
+  })();
   </script>
 </body>
 </html>
