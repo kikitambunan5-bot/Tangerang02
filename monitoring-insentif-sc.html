@@ -543,4 +543,75 @@
           tampilView("viewDetail");
           const outletObj = cariOutlet(psrObj, outletParam);
           el("judulUtama").textContent = outletObj ? outletObj.nama : outletParam;
-          el("subJudul").textContent = psrObj.nama + " · " 
+          el("subJudul").textContent = psrObj.nama + " · " + LABEL_PERIODE;
+          const kembaliP = new URLSearchParams({ psr: psrObj.nama });
+          if (hanyaLebih) kembaliP.set("filter", "lebih");
+          setKembali("monitoring-insentif-sc.html?" + kembaliP, "Kembali ke daftar outlet");
+
+          const dasarP = { psr: psrObj.nama, outlet: outletObj ? outletObj.asli : outletParam };
+          tautanProduk = {
+            semua: "monitoring-insentif-sc.html?" + new URLSearchParams(dasarP),
+            lebih: "monitoring-insentif-sc.html?" + new URLSearchParams({ ...dasarP, produk: "lebih" }),
+            kurang: "monitoring-insentif-sc.html?" + new URLSearchParams({ ...dasarP, produk: "kurang" }),
+          };
+
+          if (outletObj) {
+            renderDetail(outletObj);
+          } else {
+            outletAktif = null;
+            renderProduk();
+            const kosong = el("listProdukKosong");
+            kosong.textContent = "Outlet ini tidak ditemukan untuk periode November 2026.";
+            kosong.classList.remove("hidden");
+          }
+        }
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function render() {
+      const dPsr = SheetData.get(KUNCI_PSR);
+      dataPsr = siap(dPsr) ? ambilNamaPsr(dPsr) : [];
+
+      const dIns = SheetData.get(KUNCI_INSENTIF);
+      if (dIns.status === "kosong") return tampilPesan("Link insentifSc belum diisi di sheet.js.", "error");
+      if (dIns.status === "error") return tampilPesan("Data insentifSc gagal dimuat. Pastikan tab sudah dipublish sebagai CSV.", "error");
+      if (!siap(dIns)) return tampilPesan("Memuat data insentif…");
+      if (!dIns.rows || dIns.rows.length === 0) return tampilPesan("Data insentifSc kosong.", "error");
+
+      tampilPesan("");
+      dataPeta = olahInsentif(dIns);
+      atur();
+    }
+
+    /* ---------- Menu samping ---------- */
+    function bukaMenu() {
+      el("navOverlay").classList.remove("hidden");
+      el("navDrawer").classList.remove("translate-x-full");
+    }
+    function tutupMenu() {
+      el("navOverlay").classList.add("hidden");
+      el("navDrawer").classList.add("translate-x-full");
+    }
+
+    /* ---------- Event ---------- */
+    el("cariPsr").addEventListener("input", renderPsr);
+    el("produkPrev").addEventListener("click", () => {
+      if (halamanProduk > 1) { halamanProduk--; renderProduk(); }
+    });
+    el("produkNext").addEventListener("click", () => {
+      halamanProduk++;
+      renderProduk();
+    });
+    el("navToggle").addEventListener("click", bukaMenu);
+    el("navClose").addEventListener("click", tutupMenu);
+    el("navOverlay").addEventListener("click", tutupMenu);
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") tutupMenu(); });
+
+    SheetData.onUpdate(render);
+    render();
+    if (window.lucide) lucide.createIcons();
+  })();
+  </script>
+</body>
+</html>
