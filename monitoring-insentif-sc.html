@@ -702,4 +702,123 @@
   })();
   </script>
 </body>
+  <script>
+(function () {
+  const PERIODE_INS = "202611";
+  const KOLOM_INS = 13; // kolom N: REALISASI X NILAI INSENTIF
+
+  function insTeks(v) {
+    return String(v == null ? "" : v).replace(/\s+/g, " ").trim();
+  }
+  function insKunci(v) {
+    return insTeks(v).normalize("NFKC").toLocaleUpperCase("id-ID");
+  }
+  function insAngka(v) {
+    let s = insTeks(v).replace(/Rp/gi, "").replace(/\s/g, "");
+    if (!s) return 0;
+    if (s.indexOf(",") !== -1) s = s.replace(/\./g, "").replace(",", ".");
+    else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+    const n = parseFloat(s);
+    return isNaN(n) ? 0 : n;
+  }
+  function insRp(n) {
+    return "Rp " + Math.round(n).toLocaleString("id-ID");
+  }
+
+  // Peta: "PSR|KODE/NAMA OUTLET" -> total insentif periode 202611
+  let petaIns = new Map();
+
+  function insBangunPeta() {
+    petaIns = new Map();
+    const d = SheetData.get("insentifSc");
+    if (!d || !(d.status === "ok" || d.status === "cache") || !d.rows) return;
+
+    let psrA = "", kodeA = "", outletA = "";
+    const sudah = new Set();
+
+    d.rows.forEach(function (r) {
+      const awal = r.slice(0, 6).map(insTeks).join(" ").toUpperCase();
+      if (/\b(TOTAL|JUMLAH|GRAND)\b/.test(awal)) return;
+
+      const psr = insTeks(r[1]); if (psr) psrA = psr;
+      const kode = insTeks(r[2]); if (kode) kodeA = kode;
+      const outlet = insTeks(r[3]); if (outlet) outletA = outlet;
+
+      if (insTeks(r[6]) !== PERIODE_INS) return;
+      const produk = insTeks(r[5]);
+      if (!psrA || !outletA || !produk) return;
+
+      const kunciOutlet = insKunci(psrA) + "|" + insKunci(kodeA || outletA);
+      const kunciBaris = kunciOutlet + "|" + insKunci(produk);
+      if (sudah.has(kunciBaris)) return;
+      sudah.add(kunciBaris);
+
+      petaIns.set(kunciOutlet, (petaIns.get(kunciOutlet) || 0) + insAngka(r[KOLOM_INS]));
+    });
+  }
+
+  function insTotal(psr, outlet) {
+    return petaIns.get(insKunci(psr) + "|" + insKunci(outlet)) || 0;
+  }
+
+  // Tambahan di daftar outlet
+  function insTempelDaftar() {
+    const list = document.getElementById("listOutlet");
+    if (!list) return;
+    const P = new URLSearchParams(location.search);
+    const psr = P.get("psr");
+    if (!psr || P.get("outlet")) return;
+
+    Array.from(list.children).forEach(function (li) {
+      const a = li.querySelector('a[href*="outlet="]');
+      if (!a) return;
+      const kolom = li.querySelector("a > div.min-w-0");
+      if (!kolom || kolom.querySelector(".ins-tambahan")) return;
+
+      const outlet = new URL(a.href, location.href).searchParams.get("outlet") || "";
+      const p = document.createElement("p");
+      p.className = "ins-tambahan mt-1 text-xs text-slate-500";
+      p.textContent = "Insentif: " + insRp(insTotal(psr, outlet));
+      kolom.appendChild(p);
+    });
+  }
+
+  // Tambahan di ringkasan outlet
+  function insTempelRingkas() {
+    const view = document.getElementById("viewDetail");
+    if (!view || view.classList.contains("hidden")) return;
+    const P = new URLSearchParams(location.search);
+    const psr = P.get("psr");
+    const outlet = P.get("outlet");
+    if (!psr || !outlet) return;
+
+    const grid = view.querySelector(".grid");
+    if (!grid) return;
+
+    let box = document.getElementById("insTambahanDetail");
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "insTambahanDetail";
+      box.className = "-mt-2 mb-5 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm";
+      grid.insertAdjacentElement("afterend", box);
+    }
+    box.innerHTML =
+      '<p class="text-xs text-slate-400">Total insentif periode November 2026</p>' +
+      '<p class="mt-0.5 text-sm font-bold">' + insRp(insTotal(psr, outlet)) + '</p>';
+  }
+
+  function insSemua() {
+    insBangunPeta();
+    insTempelDaftar();
+    insTempelRingkas();
+  }
+
+  // Ikuti setiap kali daftar outlet dibangun ulang
+  const list = document.getElementById("listOutlet");
+  if (list) new MutationObserver(insTempelDaftar).observe(list, { childList: true });
+
+  SheetData.onUpdate(insSemua);
+  insSemua();
+})();
+</script>
 </html>
