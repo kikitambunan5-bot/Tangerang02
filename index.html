@@ -1179,5 +1179,129 @@ if (window.SheetData) {
     })();
   </script>
   <script src="nav.js"></script>
+<script>
+/* Dua kartu jumlah outlet berdasarkan total insentif periode 202611 (tab insentifSc).
+   Baris kartu disisipkan tepat di bawah baris Rata-rata / Tertinggi, meniru gaya kartu tersebut. */
+(function () {
+  const PERIODE = "202611";
+  const ID_BARIS = "insOutletRow";
+  const KOLOM_QTY = 7, KOLOM_REAL_UB = 9, KOLOM_INS = 13;
+
+  function toNum(v) {
+    if (typeof SheetData !== "undefined" && SheetData.toNumber) return SheetData.toNumber(v) || 0;
+    const n = Number(String(v ?? "").replace(/[^0-9.-]/g, ""));
+    return isNaN(n) ? 0 : n;
+  }
+
+  function hitung() {
+    const d = SheetData.get("insentifSc");
+    if (!d || d.status === "memuat" || !Array.isArray(d.rows) || d.rows.length === 0) return null;
+
+    const total = new Map();
+    const sudah = new Set();
+    let psr = "", kode = "", outlet = "";
+
+    d.rows.forEach(r => {
+      const p = String(r[1] ?? "").trim();
+      const k = String(r[2] ?? "").trim();
+      const o = String(r[3] ?? "").trim();
+      if (p) psr = p;          // sel gabungan diisi dari baris atas
+      if (k) kode = k;
+      if (o) outlet = o;
+
+      if (String(r[6] ?? "").trim() !== PERIODE) return;
+
+      const kunciOutlet = psr + "|" + (kode || outlet);
+      const kunciProduk = kunciOutlet + "|" + String(r[4] ?? "").trim();
+      if (sudah.has(kunciProduk)) return;   // satu produk dihitung sekali
+      sudah.add(kunciProduk);
+
+      const qty = toNum(r[KOLOM_QTY]);
+      const realUb = toNum(r[KOLOM_REAL_UB]);
+      const ins = toNum(r[KOLOM_INS]);
+      const hijau = realUb > 0 && realUb >= qty;
+
+      if (!total.has(kunciOutlet)) total.set(kunciOutlet, 0);
+      if (hijau) total.set(kunciOutlet, total.get(kunciOutlet) + ins);
+    });
+
+    let atas = 0, tengah = 0;
+    total.forEach(v => {
+      if (v >= 100000) atas++;
+      else if (v > 10000) tengah++;
+    });
+    return { atas, tengah };
+  }
+
+  function cariBaris() {
+    let terkecil = null;
+    document.querySelectorAll("body *").forEach(el => {
+      if (["SCRIPT", "STYLE", "NOSCRIPT"].includes(el.tagName)) return;
+      if (el.id === ID_BARIS || el.closest("#" + ID_BARIS)) return;
+      const t = el.textContent || "";
+      if (/rata/i.test(t) && /tertinggi/i.test(t) && el.children.length >= 2) {
+        if (!terkecil || t.length < terkecil.textContent.length) terkecil = el;
+      }
+    });
+    return terkecil;
+  }
+
+  function pasang() {
+    if (document.getElementById(ID_BARIS)) return true;
+
+    const baris = cariBaris();
+    if (!baris) return false;
+
+    const templat = Array.from(baris.children).find(c => /tertinggi/i.test(c.textContent)) || baris.lastElementChild;
+
+    const wadah = baris.cloneNode(false);
+    wadah.removeAttribute("id");
+    wadah.id = ID_BARIS;
+    wadah.style.gridTemplateColumns = "repeat(2, minmax(0, 1fr))";
+
+    const kunci = ["atas", "tengah"];
+    const label = ["Outlet Insentif Melebihi 100 Ribu", "Outlet Insentif 10 Ribu – 100 Ribu"];
+
+    for (let i = 0; i < 2; i++) {
+      const kartu = templat.cloneNode(true);
+      kartu.removeAttribute("id");
+      kartu.querySelectorAll("[id]").forEach(e => e.removeAttribute("id"));
+
+      const daun = Array.from(kartu.querySelectorAll("*"))
+        .filter(e => e.children.length === 0 && e.textContent.trim() !== "");
+      if (daun.length < 2) return false;
+
+      const teks = daun.find(e => /tertinggi/i.test(e.textContent)) || daun[0];
+      const nilai = daun.find(e => e !== teks && /\d|Rp/i.test(e.textContent)) || daun.find(e => e !== teks);
+
+      teks.textContent = label[i];
+      nilai.textContent = "–";
+      nilai.dataset.insKartu = kunci[i];
+
+      wadah.appendChild(kartu);
+    }
+
+    baris.insertAdjacentElement("afterend", wadah);
+    return true;
+  }
+
+  function perbarui() {
+    if (typeof SheetData === "undefined") return;
+    if (!pasang()) return;
+
+    const h = hitung();
+    const atas = document.querySelector('[data-ins-kartu="atas"]');
+    const tengah = document.querySelector('[data-ins-kartu="tengah"]');
+    if (atas) atas.textContent = h ? h.atas + " outlet" : "–";
+    if (tengah) tengah.textContent = h ? h.tengah + " outlet" : "–";
+  }
+
+  window.addEventListener("sheet:update", perbarui);
+  document.addEventListener("DOMContentLoaded", perbarui);
+  window.addEventListener("load", perbarui);
+  setInterval(perbarui, 1500);
+  perbarui();
+})();
+</script>
 </body>
 </html>
