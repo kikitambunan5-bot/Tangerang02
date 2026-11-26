@@ -1303,5 +1303,72 @@ if (window.SheetData) {
   perbarui();
 })();
 </script>
+<script>
+/* Sembunyikan 2 kartu insentif outlet saat bulan dipilih bukan November 2026 */
+(function () {
+  const ID = "insOutletRow";
+
+  function teksBulan() {
+    try {
+      const semua = document.querySelectorAll("body *");
+      let label = null;
+      for (const el of semua) {
+        if (el.closest("#" + ID)) continue;
+        if (el.children.length !== 0) continue;
+        const t = (el.textContent || "").trim();
+        if (!t) continue;
+        if (/bulan.*pilih/i.test(t) || /bulan.*aktif/i.test(t)) { label = el; break; }
+      }
+      if (!label) return "";
+      let node = label.parentElement;
+      for (let i = 0; i < 5 && node; i++) {
+        const t = (node.textContent || "").replace(/\s+/g, " ").trim();
+        if (t.length > label.textContent.trim().length + 1) return t;
+        node = node.parentElement;
+      }
+      return "";
+    } catch (e) { return ""; }
+  }
+
+  function isNovember() {
+    try {
+      const c = ["bulanTerpilih","bulanAktif","bulanDipilih","bulanPilih","BULAN_TERPIILIH","BULAN_AKTIF","selectedMonth","currentMonth","activeMonth","bulan"];
+      for (const k of c) {
+        if (window[k] != null) {
+          const s = String(window[k]);
+          if (s === "202611") return true;
+          if (/^2026(0[1-9]|10)$/.test(s)) return false;
+        }
+      }
+    } catch (e) {}
+    const t = teksBulan();
+    if (!t) return true;
+    const r = t.toLowerCase();
+    if (r.includes("nov") || r.includes("202611")) return true;
+    const lain = ["jan","feb","mar","apr","mei","may","jun","jul","agu","aug","sep","okt","oct","des","dec"];
+    for (const b of lain) { if (r.includes(b)) return false; }
+    const angka = r.replace(/[^0-9]/g, "");
+    if (/20260[1-9]/.test(angka)) return false;
+    if (/202610/.test(angka)) return false;
+    if (/202611/.test(angka)) return true;
+    if (/(2026|\b26\b)/.test(r) && !/11/.test(r)) return false;
+    return true;
+  }
+
+  function atur() {
+    const row = document.getElementById(ID);
+    if (!row) return;
+    row.style.display = isNovember() ? "" : "none";
+  }
+
+  document.addEventListener("click", () => { setTimeout(atur, 50); setTimeout(atur, 300); });
+  window.addEventListener("sheet:update", atur);
+  setInterval(atur, 600);
+  if (document.body) {
+    try { new MutationObserver(atur).observe(document.body, { childList: true, subtree: true, characterData: true }); } catch (e) {}
+  }
+  atur();
+})();
+</script>
 </body>
 </html>
