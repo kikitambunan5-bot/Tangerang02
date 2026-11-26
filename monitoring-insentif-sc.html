@@ -829,5 +829,105 @@
     insSemua();
   })();
   </script>
+<script>
+(function () {
+  const PERIODE_PRD = "202611";
+  const KOLOM_INS_PRD = 13; // kolom N: REALISASI X NILAI INSENTIF
+
+  function pTeks(v) {
+    return String(v == null ? "" : v).replace(/\s+/g, " ").trim();
+  }
+  function pKunci(v) {
+    return pTeks(v).normalize("NFKC").toLocaleUpperCase("id-ID");
+  }
+  function pAngka(v) {
+    let s = pTeks(v).replace(/Rp/gi, "").replace(/\s/g, "");
+    if (!s) return 0;
+    if (s.indexOf(",") !== -1) s = s.replace(/\./g, "").replace(",", ".");
+    else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+    const n = parseFloat(s);
+    return isNaN(n) ? 0 : n;
+  }
+  function pRp(n) {
+    return "Rp " + Math.round(n).toLocaleString("id-ID");
+  }
+
+  // Peta: "PSR|OUTLET|PRODUK" -> nilai kolom N periode 202611 (setiap produk dihitung sekali)
+  let petaPrd = new Map();
+
+  function pBangun() {
+    petaPrd = new Map();
+    const d = SheetData.get("insentifSc");
+    if (!d || !(d.status === "ok" || d.status === "cache") || !d.rows) return;
+
+    let psrA = "", kodeA = "", outletA = "";
+    const sudah = new Set();
+
+    d.rows.forEach(function (r) {
+      const awal = r.slice(0, 6).map(pTeks).join(" ").toUpperCase();
+      if (/\b(TOTAL|JUMLAH|GRAND)\b/.test(awal)) return;
+
+      const psr = pTeks(r[1]); if (psr) psrA = psr;
+      const kode = pTeks(r[2]); if (kode) kodeA = kode;
+      const outlet = pTeks(r[3]); if (outlet) outletA = outlet;
+
+      if (pTeks(r[6]) !== PERIODE_PRD) return;
+      const produk = pTeks(r[5]);
+      if (!psrA || !outletA || !produk) return;
+
+      const kunciProduk = pKunci(produk);
+      const kunciBaris = pKunci(psrA) + "|" + pKunci(kodeA || outletA) + "|" + kunciProduk;
+      if (sudah.has(kunciBaris)) return;
+      sudah.add(kunciBaris);
+
+      const nilai = pAngka(r[KOLOM_INS_PRD]);
+      petaPrd.set(kunciBaris, nilai);
+      // Kunci alternatif memakai nama outlet, untuk jaga-jaga jika URL memakai nama
+      petaPrd.set(pKunci(psrA) + "|" + pKunci(outletA) + "|" + kunciProduk, nilai);
+    });
+  }
+
+  // Tambahkan baris Insentif di bawah Realisasi sales pada setiap kartu produk
+  function pTempel() {
+    const list = document.getElementById("listProduk");
+    const view = document.getElementById("viewDetail");
+    if (!list || !view || view.classList.contains("hidden")) return;
+
+    const P = new URLSearchParams(location.search);
+    const psr = pTeks(P.get("psr") || "");
+    const outlet = pTeks(P.get("outlet") || "");
+    if (!psr || !outlet) return;
+
+    Array.from(list.children).forEach(function (li) {
+      if (li.querySelector(".prd-insentif")) return;
+      const namaEl = li.querySelector("p.text-sm.font-semibold");
+      const kananEl = li.querySelector("div.shrink-0");
+      if (!namaEl || !kananEl) return;
+
+      const produk = pTeks(namaEl.textContent);
+      const nilai = petaPrd.get(pKunci(psr) + "|" + pKunci(outlet) + "|" + pKunci(produk)) || 0;
+
+      const baris = document.createElement("div");
+      baris.className = "prd-insentif flex justify-end gap-2";
+      baris.innerHTML =
+        '<span class="text-slate-400">Insentif</span>' +
+        '<span class="whitespace-nowrap font-semibold">' + pRp(nilai) + '</span>';
+      kananEl.appendChild(baris);
+    });
+  }
+
+  function pSemua() {
+    pBangun();
+    pTempel();
+  }
+
+  // Setiap kali daftar produk dibangun ulang (ganti outlet, ganti halaman, ganti filter), tambahkan baris insentif
+  const list = document.getElementById("listProduk");
+  if (list) new MutationObserver(pTempel).observe(list, { childList: true });
+
+  SheetData.onUpdate(pSemua);
+  pSemua();
+})();
+</script>
 </body>
 </html>
